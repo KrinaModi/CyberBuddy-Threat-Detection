@@ -1,39 +1,92 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-from flask import Flask, render_template, request
 import pickle
+import pandas as pd
+import csv
+import os
+
+
+from flask import Flask, render_template, request, jsonify, redirect
 
 from utils.preprocessing import clean_text
 from utils.features import extract_features
-from sklearn.linear_model import LogisticRegression
-import pandas as pd
 
-app = Flask(__name__, template_folder='../frontend/templates')
 
-# Load and train model once (simple approach)
-data = pd.read_csv('datasets/email_dataset.csv')
-data['cleaned_text'] = data['text_or_url'].apply(clean_text)
-X = pd.DataFrame(list(data['cleaned_text'].apply(extract_features)))
-y = data['label']
+# ------------------- Flask App -------------------
+app = Flask(
+    __name__,
+    template_folder="../frontend/templates",
+    static_folder="../frontend"
+)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+USERS_FILE = os.path.join(BASE_DIR, "users.csv")
 
-model = LogisticRegression(max_iter=1000, class_weight={0:1, 1:2})
-model.fit(X, y)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    result = None
-    if request.method == 'POST':
-        user_input = request.form['message']
-        cleaned = clean_text(user_input)
-        features = extract_features(cleaned)
-        df = pd.DataFrame([features])
-        prediction = model.predict(df)[0]
+# ------------------- Load ML Model -------------------
+import os
 
-        result = "⚠️ Threat Detected" if prediction == 1 else "✅ Safe Content"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model", "threat_model.pkl")
 
-    return render_template('index.html', result=result)
 
-if __name__ == '__main__':
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
+
+
+# ------------------- ROUTES -------------------
+
+# 1️⃣ LOGIN PAGE (FIRST PAGE)
+@app.route("/", methods=["GET"])
+def login_page():
+    return render_template("login.html")
+
+
+# 2️⃣ LOGIN HANDLER
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
+
+    # Demo credentials
+    if username.lower() == "krina" and password == "1234":
+        return redirect("/dashboard")
+
+    # On failure, go back to login page with message
+    return render_template("login.html", error="Invalid username or password")
+
+
+
+# 3️⃣ DASHBOARD (THREAT DETECTION PAGE)
+@app.route("/dashboard")
+def dashboard():
+    return render_template("index.html")
+
+
+
+# 4️⃣ ML SCAN API (AJAX)
+@app.route("/scan", methods=["POST"])
+def scan():
+    data = request.get_json()
+    text = data.get("input", "")
+
+    # Preprocess
+    cleaned = clean_text(text)
+    features = extract_features(cleaned)
+
+    # Convert to DataFrame
+    df = pd.DataFrame([features])
+
+    # Predict
+    prediction = model.predict(df)[0]
+    probability = model.predict_proba(df)[0][1]
+
+    result = "PHISHING" if prediction == 1 else "SAFE"
+    risk = int(probability * 100)
+
+    return jsonify({
+        "result": result,
+        "risk": risk
+    })
+
+
+# ------------------- RUN SERVER -------------------
+if __name__ == "__main__":
     app.run(debug=True)
