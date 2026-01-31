@@ -34,3 +34,15 @@ y_pred = model.predict(X_test)
 
 print("Enhanced Model Accuracy:", accuracy_score(y_test, y_pred))
 print("\nEnhanced Classification Report:\n", classification_report(y_test, y_pred))
+
+import pickle
+import os
+
+# Ensure model directory exists
+os.makedirs("backend/model", exist_ok=True)
+
+# Save the enhanced model
+with open("backend/model/threat_model.pkl", "wb") as f:
+    pickle.dump(model, f)
+
+print("Enhanced model saved as threat_model.pkl")
