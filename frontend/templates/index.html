@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <a href="/logout">Logout</a>
+
     <title>Cyber Buddy</title>
     <style>
         body {
@@ -45,6 +47,11 @@
     {% if result %}
         <div class="result">{{ result }}</div>
     {% endif %}
+
+    {% if risk %}
+<p>Risk Score: {{ risk }}%</p>
+{% endif %}
+
 </div>
 
 </body>
