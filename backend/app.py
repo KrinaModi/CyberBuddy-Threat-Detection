@@ -4,7 +4,9 @@ import csv
 import os
 
 
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, redirect
+
+
 
 from utils.preprocessing import clean_text
 from utils.features import extract_features
@@ -14,8 +16,10 @@ from utils.features import extract_features
 app = Flask(
     __name__,
     template_folder="../frontend/templates",
-    static_folder="../frontend"
+    static_folder="../frontend/static"
 )
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 USERS_FILE = os.path.join(BASE_DIR, "users.csv")
 
@@ -45,13 +49,51 @@ def login():
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "").strip()
 
-    # Demo credentials
-    if username.lower() == "krina" and password == "1234":
-        return redirect("/dashboard")
+    with open("backend/users.csv", mode="r", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
 
-    # On failure, go back to login page with message
+        for row in reader:
+            csv_user = row["username"].strip()
+            csv_pass = row["password"].strip()
+
+            if csv_user == username and csv_pass == password:
+                return redirect("/dashboard")
+
     return render_template("login.html", error="Invalid username or password")
 
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+
+        if password != confirm_password:
+            return render_template(
+                "register.html",
+                message="Passwords do not match"
+            )
+
+        # Check if username already exists
+        with open("backend/users.csv", newline="", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row["username"] == username:
+                    return render_template(
+                        "register.html",
+                        message="Username already exists"
+                    )
+
+        # Save new user
+        with open("backend/users.csv", "a", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow([username, email, password])
+
+        return redirect("/")
+
+    return render_template("register.html")
 
 
 # 3️⃣ DASHBOARD (THREAT DETECTION PAGE)
