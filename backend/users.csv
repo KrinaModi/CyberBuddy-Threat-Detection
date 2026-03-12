@@ -1,5 +1,6 @@
-username,password
-admin,admin123
-krina,1234
-lala,1234
-test,test123
+username,email,password
+admin,abc@gmail.com,admin123
+krina,abc@gmail.com,1234
+lala,abc@gmail.com,1234
+test,abc@gmail.com,test123
+dhruvi,abc@gmail.com,1234

@@ -85,3 +85,98 @@ body {
     text-align: center;
     margin-bottom: 10px;
 }
+
+/* ============================= */
+/* Analyzer / Dashboard Styling  */
+/* ============================= */
+
+.dashboard-card {
+    width: 420px;
+    background: #020617;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(0, 255, 255, 0.08);
+}
+
+.dashboard-card h1 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.dashboard-card span {
+    color: #22d3ee;
+}
+
+.dashboard-card p {
+    text-align: center;
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+.dashboard-card textarea {
+    width: 100%;
+    height: 90px;
+    padding: 12px;
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    resize: none;
+}
+
+.dashboard-card textarea:focus {
+    outline: none;
+    border-color: #22d3ee;
+}
+
+.dashboard-card button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    background: #22d3ee;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #020617;
+}
+
+.dashboard-card button:hover {
+    background: #0ea5e9;
+}
+
+/* Result box */
+
+.result-box {
+    margin-top: 20px;
+    padding: 12px;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.safe {
+    background: rgba(34,197,94,0.15);
+    color: #4ade80;
+}
+
+.warning {
+    background: rgba(250,204,21,0.15);
+    color: #facc15;
+}
+
+.danger {
+    background: rgba(248,113,113,0.15);
+    color: #f87171;
+}
+
+.result-box{
+    margin-top:15px;
+    padding:10px;
+    border-radius:6px;
+    text-align:center;
+    background:#020617;
+    border:1px solid #334155;
+}
