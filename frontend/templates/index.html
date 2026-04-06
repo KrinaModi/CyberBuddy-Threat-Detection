@@ -1,72 +1,90 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<div class="dashboard-card">
 <title>Cyber Buddy</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 </head>
 
 <body>
 
-<div class="dashboard-card">
+<div class="main-container">
 
-<h1>Cyber <span>Buddy</span></h1>
-<p>AI-powered Fake URL & Email Detection</p>
+<div class="header">
+<img src="{{ url_for('static', filename='shield.png') }}" class="logo">
+<h2>
+    Cyber<span>Buddy</span>
+</h2>
+</div>
 
-<form action="/analyze" method="POST">
+<h1 class="title">Phishing Threat Detection</h1>
+
+<form onsubmit="event.preventDefault(); analyzeEmail();">
+
+<div class="input-box">
 
 <textarea
-name="input_data"
+id="inputText"
 placeholder="Paste URL or Email here..."
 required></textarea>
 
-<button type="submit">Analyze Threat</button>
+</div>
+
+<button type="submit" class="analyze-btn">Analyze</button>
 
 </form>
+<div class="result-container" style="margin-top:20px; color:white;">
+    <div id="resultBox" class="result-btn"></div>
 
-{% if result %}
-<div class="result-box">
-{{ result }}
+    <h3>Risk Score: <span id="risk"></span></h3>
+
+    <h4>Reasons:</h4>
+    <ul id="reasons"></ul>
 </div>
-{% endif %}
-
-</div>
-
-</body>
-</html><!DOCTYPE html>
-<html>
-<head>
-    <title>Cyber Buddy</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
-</head>
-
-<body>
-
-<div class="auth-card">
-
-<h2>Cyber Buddy</h2>
-<p style="text-align:center;">AI-powered Fake URL & Email Detection</p>
-
-<form action="/analyze" method="POST">
-
-<textarea
-name="input_data"
-placeholder="Paste URL or Email here..."
-style="width:100%; height:90px; padding:10px; margin-top:10px;"
-required></textarea>
-
-<button type="submit">Analyze Threat</button>
-
-</form>
-
-{% if result %}
-<div class="result-box">
-{{ result }}
-</div>
-{% endif %}
 
 </div>
+<script>
+async function analyzeEmail() {
+    const input = document.getElementById("inputText").value;
+
+    const response = await fetch("/scan", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            input: input,
+            sender: "test@gmail.com"
+        })
+    });
+
+    const data = await response.json();
+
+    // Result text
+    const resultBox = document.getElementById("resultBox");
+    resultBox.innerText = data.result;
+
+    // Color logic
+    resultBox.className = "result-btn";
+    if (data.result === "PHISHING") {
+        resultBox.classList.add("danger-btn");
+    } else if (data.result === "SUSPICIOUS") {
+        resultBox.classList.add("warn-btn");
+    } else {
+        resultBox.classList.add("safe-btn");
+    }
+
+    // Risk %
+    document.getElementById("risk").innerText = data.risk + "%";
+
+    // Reasons
+    let reasonsHTML = "";
+    data.reasons.forEach(r => {
+        reasonsHTML += `<li>${r}</li>`;
+    });
+
+    document.getElementById("reasons").innerHTML = reasonsHTML;
+}
+</script>
 
 </body>
 </html>

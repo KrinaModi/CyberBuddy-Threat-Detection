@@ -1,95 +1,158 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Cyber Buddy | Register</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>CyberBuddy | Register</title>
 
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1a 100%);
-            min-height: 100vh;
-        }
+<script src="https://cdn.tailwindcss.com"></script>
 
-        .grid-bg {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
-        }
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-        .glass-card {
-            background: rgba(255,255,255,0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-    </style>
+<style>
+
+body{
+font-family:'Outfit',sans-serif;
+margin:0;
+min-height:100vh;
+
+background-image:
+linear-gradient(rgba(5,10,25,0.45), rgba(5,10,25,0.45)),
+url("/static/bg.jpg");
+
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+}
+
+/* grid background */
+
+.grid-bg{
+position:absolute;
+inset:0;
+
+background-image:
+linear-gradient(to right, rgba(0,255,255,0.06) 1px, transparent 1px),
+linear-gradient(to bottom, rgba(0,255,255,0.06) 1px, transparent 1px);
+
+background-size:40px 40px;
+pointer-events:none;
+}
+
+/* glass card */
+
+.glass-card{
+background:rgba(15,23,42,0.7);
+backdrop-filter:blur(14px);
+border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 0 25px rgba(0,0,0,0.6);
+}
+
+/* logo */
+
+.logo-img{
+width:100px;
+display:block;
+margin:auto;
+margin-bottom:8px;
+filter:drop-shadow(0 0 6px rgba(34,211,238,0.6));
+}
+
+/* title */
+
+.brand-title{
+font-size:32px;
+font-weight:700;
+margin:0;
+color:white;
+}
+
+.brand-title span{
+color:#22d3ee;
+}
+
+.brand-subtitle{
+color:#94a3b8;
+font-size:14px;
+margin-top:4px;
+}
+
+</style>
+
 </head>
 
-<body class="flex items-center justify-center text-white relative">
+<body class="flex flex-col items-center justify-center text-white relative">
 
 <div class="grid-bg"></div>
 
+<!-- HEADER -->
+
+<div class="text-center mb-8 relative z-10">
+
+<img src="/static/shield.png" class="logo-img">
+
+<h1 class="brand-title">
+Cyber<span>Buddy</span>
+</h1>
+
+<p class="brand-subtitle">
+Create your account
+</p>
+
+</div>
+
+<!-- REGISTER CARD -->
+
 <div class="glass-card relative z-10 w-full max-w-md p-10 rounded-3xl text-center">
 
-    <h1 class="text-3xl font-bold mb-6">
-        Create <span class="text-cyan-400">Account</span>
-    </h1>
+{% if message %}
 
-    {% if message %}
-        <p class="text-red-400 mb-4">{{ message }}</p>
-    {% endif %}
+<p class="text-red-400 mb-4">{{ message }}</p>
+{% endif %}
 
-    <!-- ✅ WORKING FORM -->
-    <form method="POST" action="/register" class="space-y-4">
+<form method="POST" action="/register" class="space-y-4">
 
-        <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            required
-            class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none">
+<input
+type="text"
+name="username"
+placeholder="Username"
+required
+class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
 
-        <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none">
+<input
+type="email"
+name="email"
+placeholder="Email Address"
+required
+class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
 
-        <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none">
+<input
+type="password"
+name="password"
+placeholder="Password"
+required
+class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
 
-        <input
-            type="password"
-            name="confirm_password"
-            placeholder="Confirm Password"
-            required
-            class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none">
+<input
+type="password"
+name="confirm_password"
+placeholder="Confirm Password"
+required
+class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
 
-        <!-- 🔥 IMPORTANT -->
-        <button
-            type="submit"
-            class="w-full py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 font-semibold text-lg">
-            Register
-        </button>
-    </form>
+<button
+type="submit"
+class="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:scale-105 transition font-semibold text-lg">
+Register </button>
 
-    <p class="mt-6 text-sm text-gray-500">
-        Already have an account?
-        <a href="/" class="text-cyan-400 hover:underline">Login</a>
-    </p>
+</form>
+
+<p class="mt-6 text-sm text-gray-400">
+Already have an account?
+<a href="/" class="text-cyan-400 hover:underline">Login</a>
+</p>
+
 </div>
 
 </body>

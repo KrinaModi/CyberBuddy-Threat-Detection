@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Cyber Buddy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+
+<body style="margin:0;">
+
+<!-- NAVBAR -->
+
+<div style="
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 50px;
+    z-index:1000;
+">
+
+```
+<!-- NAVBAR WITH DARK BACKGROUND -->
+
+<div style="
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 50px;
+    background:rgba(10, 20, 40, 0.85);
+    backdrop-filter: blur(8px);
+    z-index:1000;
+">
+
+```
+<!-- LEFT -->
+<div style="display:flex; align-items:center; gap:10px;">
+    <img src="{{ url_for('static', filename='shield.png') }}" style="width:30px;">
+    <h3 style="color:white; margin:0;">
+        Cyber<span style="color:#38bdf8;">Buddy</span>
+    </h3>
+</div>
+
+<!-- RIGHT -->
+<div style="display:flex; gap:25px; align-items:center;">
+
+    <a href="/about" style="color:#e2e8f0; text-decoration:none;">About</a>
+
+    <a href="/how-to-use" style="color:#e2e8f0; text-decoration:none;">How to Use</a>
+
+    <a href="/login" style="color:#e2e8f0; text-decoration:none;">Login</a>
+
+    <a href="/register" style="
+        background:#38bdf8;
+        color:black;
+        padding:8px 18px;
+        border-radius:8px;
+        text-decoration:none;
+        font-weight:600;
+    ">
+        Register
+    </a>
+
+</div>
+```
+
+</div>
+
+
+</div>
+
+<!-- CONTENT -->
+
+<div style="
+    padding-top:120px;
+    text-align:center;
+">
+
+```
+<h1 style="color:white; font-size:48px; max-width:700px; margin:auto;">
+    Your AI Shield Against Cyber Threats
+</h1>
+
+<p style="color:#cbd5f5; max-width:600px; margin:20px auto;">
+    Detect phishing links, malicious emails, and suspicious content instantly using advanced machine learning.
+</p>
+
+<a href="/login" style="
+    display:inline-block;
+    margin-top:30px;
+    padding:14px 30px;
+    border-radius:10px;
+    background:linear-gradient(90deg,#3b82f6,#6366f1);
+    color:white;
+    text-decoration:none;
+    font-weight:600;
+">
+    Get Started
+</a>
+
+<!-- FEATURES -->
+<div style="
+    margin-top:60px;
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+">
+
+    <div style="background:#1e293b; padding:20px; border-radius:12px; width:250px;">
+        <h3 style="color:#38bdf8;">🔍 Smart Detection</h3>
+        <p style="color:#cbd5f5;">Analyze URLs and emails with AI-powered threat detection.</p>
+    </div>
+
+    <div style="background:#1e293b; padding:20px; border-radius:12px; width:250px;">
+        <h3 style="color:#38bdf8;">⚡ Instant Results</h3>
+        <p style="color:#cbd5f5;">Get real-time predictions with high accuracy.</p>
+    </div>
+
+    <div style="background:#1e293b; padding:20px; border-radius:12px; width:250px;">
+        <h3 style="color:#38bdf8;">🔐 Secure & Reliable</h3>
+        <p style="color:#cbd5f5;">Your data stays protected and private.</p>
+    </div>
+
+</div>
+```
+
+</div>
+
+</body>
+</html>

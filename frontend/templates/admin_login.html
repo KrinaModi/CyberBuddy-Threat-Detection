@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 
 <html lang="en">
-<head>
 
+<head>
 <meta charset="UTF-8">
-<title>CyberBuddy | Reset Password</title>
+<title>CyberBuddy | Admin Login</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -66,27 +66,25 @@ Cyber<span class="text-cyan-400">Buddy</span>
 </h1>
 
 <p class="text-gray-400 text-sm">
-Reset your password
+Cyber Security Control Panel
 </p>
 
 </div>
 
-<!-- RESET CARD -->
+<!-- ADMIN CARD -->
 
 <div class="glass-card w-[420px] p-10 rounded-3xl text-center">
 
-<h2 class="text-xl font-semibold mb-2">Reset Password</h2>
+<h2 class="text-xl font-semibold mb-6">
+Admin Login
+</h2>
 
-<p class="text-gray-400 mb-6 text-sm">
-Enter your registered email to reset your password
-</p>
-
-<form action="/forgot-password" method="POST" class="space-y-4">
+<form action="/admin/login" method="POST" class="space-y-4">
 
 <input
-type="email"
-name="email"
-placeholder="Enter your email"
+type="text"
+name="username"
+placeholder="Admin Username"
 required
 class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
 
@@ -94,8 +92,8 @@ class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-non
 
 <input
 type="password"
-name="new_password"
-placeholder="Enter new password"
+name="password"
+placeholder="Password"
 required
 class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
 
@@ -107,13 +105,14 @@ class="w-full py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 font-semibold text-l
 
 >
 
-Reset Password </button>
+Admin Login </button>
 
 </form>
 
 <p class="mt-6 text-sm text-gray-400">
-Remember your password?
-<a href="/" class="text-cyan-400 hover:underline">Login</a>
+<a href="/" class="text-cyan-400 hover:underline">
+⬅ Back to User Login
+</a>
 </p>
 
 </div>
