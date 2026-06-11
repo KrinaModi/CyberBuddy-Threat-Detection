@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>URL Scanner - CyberBuddy</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <div class="logo-section">
+
+            <img src="{{ url_for('static', filename='shield.png') }}"
+                 class="sidebar-logo">
+
+            <h2>Cyber<span>Buddy</span></h2>
+
+        </div>
+
+        <!-- USER -->
+        <div class="sidebar-user">
+
+            <div class="user-avatar">
+                {{ session['user'][0].upper() }}
+            </div>
+
+            <div>
+                <h4>{{ session['user'] }}</h4>
+                <p>Protected User</p>
+            </div>
+
+        </div>
+
+        <!-- MENU -->
+        <ul class="sidebar-menu">
+
+    <li>
+        <a href="/dashboard">
+            <i class="fa-solid fa-envelope"></i>
+            <span>Email Scanner</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="/url-scanner">
+            <i class="fa-solid fa-link"></i>
+            <span>URL Scanner</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="/profile">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </li>
+
+    <li>
+        <a href="/logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout</span>
+        </a>
+    </li>
+
+</ul>
+
+    </div>
+
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <button class="sidebar-toggle"
+        id="sidebarToggle">
+
+    ☰
+
+</button>
+
+        <!-- TOP -->
+        <div class="top-navbar">
+
+            <h1>URL Scanner</h1>
+
+            <div class="profile-dropdown">
+
+    <button type="button"
+            class="profile-btn">
+
+        <div class="profile-circle">
+            {{ session['user'][0].upper() }}
+        </div>
+
+    </button>
+
+
+    <!-- DROPDOWN -->
+    <div class="dropdown-content">
+
+        <p>
+            <strong>{{ session['user'] }}</strong>
+        </p>
+
+        <p>
+            {{ session.get('email', 'user@example.com') }}
+        </p>
+
+        <hr>
+
+        <a href="/profile">
+            <i class="fa-solid fa-user"></i>
+            My Profile
+        </a>
+
+        <a href="/settings">
+            <i class="fa-solid fa-shield-halved"></i>
+            Security & Privacy
+        </a>
+
+        <a href="/logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+        </div>
+
+
+        <!-- URL SCANNER -->
+        <div class="main-container">
+
+            <form method="POST" action="/check_url">
+
+                <textarea
+                    name="url"
+                    placeholder="Paste suspicious URL here..."
+                    required></textarea>
+
+                <button type="submit"
+                        class="analyze-btn">
+
+                    Scan URL
+
+                </button>
+
+            </form>
+
+
+            <!-- RESULT -->
+            <div class="result-wrapper">
+
+    <!-- STATUS -->
+
+    <div class="status-box {{ status|lower if status else 'default' }}">
+
+        {{ status if status else "No Result" }}
+
+    </div>
+
+
+    <!-- SCORE -->
+
+    <div class="score-box">
+
+        <h3>Risk Score</h3>
+
+        <p>
+            {{ score if score else "0" }}%
+        </p>
+
+    </div>
+
+
+    <!-- REASONS -->
+
+    <div class="reasons-box">
+
+        <h4>Reasons</h4>
+
+        <ul>
+
+            {% if reasons %}
+
+                {% for reason in reasons %}
+
+                    <li>• {{ reason }}</li>
+
+                {% endfor %}
+
+            {% else %}
+
+                <li>No analysis yet</li>
+
+            {% endif %}
+
+        </ul>
+
+    </div>
+
+</div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const profileButton =
+    document.querySelector(".profile-btn");
+
+const dropdown =
+    document.querySelector(".dropdown-content");
+
+profileButton.addEventListener("click", function(e){
+
+    e.stopPropagation();
+
+    dropdown.classList.toggle("show");
+});
+
+document.addEventListener("click", function(e){
+
+    if (
+        !dropdown.contains(e.target) &&
+        !profileButton.contains(e.target)
+    ) {
+
+        dropdown.classList.remove("show");
+    }
+});
+
+</script>
+<script>
+
+const toggleButton =
+    document.getElementById("sidebarToggle");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+toggleButton.addEventListener("click", () => {
+
+    sidebar.classList.toggle("collapsed");
+});
+
+</script>
+
+</body>
+</html>

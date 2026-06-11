@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Profile - CyberBuddy</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <div class="logo-section">
+
+            <img src="{{ url_for('static', filename='shield.png') }}"
+                 class="sidebar-logo">
+
+            <h2>Cyber<span>Buddy</span></h2>
+
+        </div>
+
+        <!-- USER -->
+        <div class="sidebar-user">
+
+            <div class="user-avatar">
+                {{ session['user'][0].upper() }}
+            </div>
+
+            <div>
+                <h4>{{ session['user'] }}</h4>
+                <p>Protected User</p>
+            </div>
+
+        </div>
+
+        <!-- MENU -->
+        <ul class="sidebar-menu">
+
+            <li>
+        <a href="/dashboard">
+            <i class="fa-solid fa-envelope"></i>
+            <span>Email Scanner</span>
+        </a>
+    </li>
+
+            <li>
+    <a href="/url-scanner">
+        <i class="fa-solid fa-link"></i>
+        <span>URL Scanner</span>
+    </a>
+</li>
+
+<li>
+    <a href="/profile">
+        <i class="fa-solid fa-user"></i>
+        <span>Profile</span>
+    </a>
+</li>
+
+<li>
+    <a href="/logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+    </a>
+</li>
+
+        </ul>
+
+    </div>
+
+
+    <!-- MAIN -->
+    <div class="main-content">
+        <button class="sidebar-toggle"
+        id="sidebarToggle">
+
+    ☰
+
+</button>
+
+        <div class="profile-card">
+
+            <h1>Profile Information</h1>
+
+            <!-- PROFILE TOP -->
+            <div class="profile-top">
+
+                <div class="big-avatar">
+                    {{ session['user'][0].upper() }}
+                </div>
+
+                <div>
+
+                    <h2>{{ session['user'] }}</h2>
+
+                    <p class="profile-subtitle">
+                        CyberBuddy Protected User
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- INFO -->
+            <div class="profile-section">
+
+                <div class="profile-row">
+
+                    <h3>Primary Email</h3>
+
+                    <p>
+                        {{ session.get('email',
+                        'user@example.com') }}
+                    </p>
+
+                    <span class="primary-badge">
+                        Primary
+                    </span>
+
+                </div>
+
+
+                <div class="profile-row">
+
+                    <h3>Work Email</h3>
+
+                    <input type="email"
+                           placeholder="name@company.com">
+
+                    <button class="profile-btn-blue">
+                        Add Email
+                    </button>
+
+                </div>
+
+
+                <!-- ALERT -->
+                <div class="profile-alert">
+
+                    <i class="fa-solid fa-circle-exclamation"></i>
+
+                    <p>
+
+                        Add your work email to unlock
+                        advanced domain protection
+                        features.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- SUBSCRIPTION -->
+            <div class="profile-section">
+
+                <h2>Subscription</h2>
+
+                <div class="subscription-box">
+
+                    <h3>Professional API (Free Plan)</h3>
+
+                    <p>25 scans per day</p>
+
+                    <button class="upgrade-btn">
+                        Upgrade Plan
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+const toggleButton =
+    document.getElementById("sidebarToggle");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+toggleButton.addEventListener("click", () => {
+
+    sidebar.classList.toggle("collapsed");
+});
+
+</script>
+
+</body>
+</html>

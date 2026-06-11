@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Security & Privacy - CyberBuddy</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+
+<body>
+
+<div class="settings-layout">
+
+    
+    <!-- MAIN -->
+    <div class="full-settings-page">
+
+        <div class="modern-settings-card">
+
+            <a href="/dashboard" class="back-btn">
+
+    <i class="fa-solid fa-arrow-left"></i>
+
+    Back to Dashboard
+
+</a>
+
+            <div class="settings-header">
+
+                <h1>Security & Privacy</h1>
+
+                <p>
+                    Manage your account protection
+                    and password settings
+                </p>
+
+            </div>
+
+
+            <!-- PASSWORD -->
+            <div class="settings-block">
+
+                <h2>
+                    <i class="fa-solid fa-lock"></i>
+                    Change Password
+                </h2>
+
+                <form method="POST"
+                      action="/change-password">
+
+                    <div class="modern-input-group">
+
+                        <label>Current Password</label>
+
+                        <input type="password"
+                               name="current_password"
+                               required>
+
+                    </div>
+
+
+                    <div class="modern-input-group">
+
+                        <label>New Password</label>
+
+                        <input type="password"
+                               name="new_password"
+                               required>
+
+                    </div>
+
+
+                    <div class="modern-input-group">
+
+                        <label>Confirm Password</label>
+
+                        <input type="password"
+                               name="confirm_password"
+                               required>
+
+                    </div>
+
+
+                    <button type="submit"
+                            class="modern-save-btn">
+
+                        Update Password
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+            <!-- SECURITY INFO -->
+            <div class="settings-block">
+
+                <h2>
+                    <i class="fa-solid fa-shield-halved"></i>
+                    Account Security
+                </h2>
+
+                <div class="security-info-card">
+
+                    <div class="security-row">
+                        <span>2FA Status</span>
+                        <strong>Disabled</strong>
+                    </div>
+
+                    <div class="security-row">
+                        <span>Last Login</span>
+                        <strong>Today</strong>
+                    </div>
+
+                    <div class="security-row">
+                        <span>Account Status</span>
+                        <strong class="protected">
+                            Protected
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script>
+
+const toggleButton =
+    document.getElementById("sidebarToggle");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+toggleButton.addEventListener("click", () => {
+
+    sidebar.classList.toggle("collapsed");
+});
+
+</script>
+
+</body>
+
+
+</html>

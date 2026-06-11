@@ -46,28 +46,31 @@ conn.close()
 
 from utils.preprocessing import clean_text
 from utils.features import extract_features, analyze_email, get_status
+
+import os
 import joblib
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "threat_model.pkl")
-
-model = joblib.load(MODEL_PATH)
-
-
+# ------------------- Paths -------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-USERS_FILE = os.path.join(BASE_DIR, "users.csv")
 
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "model",
+    "threat_model.pkl"
+)
+
+USERS_FILE = os.path.join(
+    BASE_DIR,
+    "users.csv"
+)
 
 # ------------------- Load ML Model -------------------
-import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "threat_model.pkl")
+saved_data = joblib.load(MODEL_PATH)
 
-
-with open(MODEL_PATH, "rb") as f:
-    model = pickle.load(f)
+model = saved_data["model"]
+feature_columns = saved_data["features"]
     
     
 import re
@@ -256,17 +259,20 @@ def detect():
     return render_template('index.html')  # your current file
 
 
+from utils.url_scanner import scan_url
+
 @app.route('/check_url', methods=['POST'])
 def check_url():
-
     url = request.form['url']
 
-    if "login" in url or "bank" in url:
-        result = "Malicious"
-    else:
-        result = "Safe"
+    result = scan_url(url)
 
-    return render_template("home.html", result=result)
+    return render_template(
+    "url_scanner.html",
+    status=status,
+    score=score,
+    reasons=reasons
+)
 
 @app.route('/admin')
 def admin():
@@ -329,6 +335,51 @@ def admin_history():
     conn.close()
 
     return render_template("admin_history.html", scans=scans)
+
+@app.route('/change-password', methods=['POST'])
+def change_password():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    current_password = request.form['current_password']
+    new_password = request.form['new_password']
+    confirm_password = request.form['confirm_password']
+
+    if new_password != confirm_password:
+        return "New passwords do not match"
+
+    conn = sqlite3.connect("database.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT password FROM users WHERE username=?",
+        (session['user'],)
+    )
+
+    user = cursor.fetchone()
+
+    if not user:
+        conn.close()
+        return "User not found"
+
+    saved_password = user[0]
+
+    if current_password != saved_password:
+        conn.close()
+        return "Current password incorrect"
+
+    cursor.execute(
+        "UPDATE users SET password=? WHERE username=?",
+        (new_password, session['user'])
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/settings")
+
+
 # 3️⃣ DASHBOARD (THREAT DETECTION PAGE)
 
 
@@ -338,50 +389,81 @@ def dashboard():
         return redirect("/login")
     return render_template("index.html")
 
+@app.route('/url-scanner')
+def url_scanner():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("url_scanner.html")
+
+@app.route('/profile')
+def profile():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("profile.html")
+
+@app.route('/settings')
+def settings():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("settings.html")
+
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
 
-    # =========================
-    # 📥 GET INPUT
-    # =========================
+    
+    # GET INPUT
+    
     user_input = request.form["input_data"]
     sender = request.form.get("sender", "test@example.com")
 
-    # =========================
-    # 🧹 CLEAN TEXT
-    # =========================
+    
+    #  CLEAN TEXT
+    
     cleaned_email = clean_text(user_input)
 
-    # =========================
-    # 🤖 ML PREDICTION (UNCHANGED LOGIC)
-    # =========================
+    
+    #  ML PREDICTION 
+    
     features = extract_features(cleaned_email)
+
     df = pd.DataFrame([features])
+
+# Ensure same columns/order as training
+    df = df.reindex(
+        columns=feature_columns,
+        fill_value=0
+    )
 
     prediction = model.predict(df)[0]
 
-    # Old result (kept for DB compatibility)
+    probability = model.predict_proba(df)[0][1]
+
+    # result 
     if prediction == 1:
         result = "Malicious"
     else:
         result = "Safe"
 
-    # =========================
-    # 🧠 RULE-BASED DETECTION (NEW)
-    # =========================
+    
+    #  RULE-BASED DETECTION (NEW)
     score, reasons = analyze_email(cleaned_email, sender)
 
-    # =========================
-    # 🔥 COMBINE ML + RULE
-    # =========================
+    #COMBINE ML + RULE
+
     if prediction == 1:
         score += 30
         reasons.append("ML model flagged as phishing")
 
-    # =========================
-    # 🎯 FINAL STATUS
-    # =========================
+    
+    #  FINAL STATUS
+    
     status = get_status(score)
 
     # =========================

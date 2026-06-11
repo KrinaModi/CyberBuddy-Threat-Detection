@@ -1,32 +1,35 @@
 import sys
 import os
 
-# Fix imports from utils
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(BASE_DIR)
+CURRENT_DIR = os.path.dirname(__file__)
+BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, '..'))
+
+sys.path.append(BACKEND_DIR)
+
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+
 from sklearn.metrics import classification_report, accuracy_score
 
-from utils.preprocessing import clean_text
-from utils.features import extract_features
+from imblearn.over_sampling import SMOTE
+
+
 
 # Dataset path
-dataset_path = os.path.join(BASE_DIR, "..", "datasets", "email_dataset.csv")
-
+CURRENT_DIR = os.path.dirname(__file__)
+dataset_path = os.path.join(CURRENT_DIR, "..", "datasets", "email_dataset.csv")
 data = pd.read_csv(dataset_path)
 
+print("Dataset path:", dataset_path)
+print("Exists:", os.path.exists(dataset_path))
+print(data.columns)
+
 # Preprocessing
-data['cleaned_text'] = data['text_or_url'].apply(clean_text)
-
-# Feature extraction
-feature_data = data['cleaned_text'].apply(extract_features)
-feature_df = pd.DataFrame(list(feature_data))
-
-X = feature_df
+X = data.drop(columns=['label'])
 y = data['label']
+
+feature_columns = X.columns.tolist()
 
 # Train test split
 X_train, X_test, y_train, y_test = train_test_split(
@@ -34,33 +37,67 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # Model
-model = LogisticRegression(
-    max_iter=1000,
-    class_weight={0:1, 1:2}
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(
+    n_estimators=30,
+    max_depth=10,
+    class_weight="balanced",
+    random_state=42,
+    n_jobs=-1
 )
 
+smote = SMOTE(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+
+
 # Train
-model.fit(X_train, y_train)
+model.fit(X_resampled, y_resampled)
 
 # Predict
-y_pred = model.predict(X_test)
+# 🔹 Get probabilities
+y_probs = model.predict_proba(X_test)[:, 1]
+
+# 🔹 Find best threshold
+from sklearn.metrics import precision_recall_curve
+import numpy as np
+
+prec, rec, thr = precision_recall_curve(y_test, y_probs)
+
+f1 = 2 * (prec * rec) / (prec + rec + 1e-9)
+best_idx = np.argmax(f1)
+best_threshold = thr[best_idx]
+best_threshold = min(best_threshold, 0.7)
+best_threshold = max(best_threshold, 0.4)   
+
+print("Best threshold:", best_threshold)
+
+# 🔹 Apply threshold
+y_pred = (y_probs > best_threshold).astype(int)
 
 print("Enhanced Model Accuracy:", accuracy_score(y_test, y_pred))
-print("\nEnhanced Classification Report:\n", classification_report(y_test, y_pred))
 
+from sklearn.metrics import classification_report
+
+print(classification_report(y_test, y_pred))
+
+from sklearn.metrics import confusion_matrix
+print(confusion_matrix(y_test, y_pred))
 
 # -------------------------
 # Save Model
 # -------------------------
 
-import pickle
+import joblib
+import os
 
-model_dir = os.path.join(BASE_DIR, "model")
-os.makedirs(model_dir, exist_ok=True)
+CURRENT_DIR = os.path.dirname(__file__)
 
-model_path = os.path.join(model_dir, "threat_model.pkl")
+model_path = os.path.join(CURRENT_DIR, "threat_model.pkl")
 
-with open(model_path, "wb") as f:
-    pickle.dump(model, f)
+joblib.dump({
+    "model": model,
+    "features": feature_columns
+}, model_path)
 
-print("Enhanced model saved at:", model_path)
+print("✅ Model saved at:", model_path)

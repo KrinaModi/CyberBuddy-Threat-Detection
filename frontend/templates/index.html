@@ -1,90 +1,244 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Cyber Buddy</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <title>CyberBuddy Dashboard</title>
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
 
-<div class="main-container">
+<div class="dashboard-container">
 
-<div class="header">
-<img src="{{ url_for('static', filename='shield.png') }}" class="logo">
-<h2>
-    Cyber<span>Buddy</span>
-</h2>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='shield.png') }}"
+                class="sidebar-logo">
+
+            <h2>Cyber<span>Buddy</span></h2>
+        </div>
+
+        <!-- USER INFO -->
+        <div class="sidebar-user">
+
+            <div class="user-avatar">
+                {{ session['user'][0].upper() }}
+            </div>
+
+            <div>
+                <h4>{{ session['user'] }}</h4>
+                <p>Protected User</p>
+            </div>
+
+        </div>
+
+        <!-- MENU -->
+        <ul class="sidebar-menu">
+
+            <li>
+                <a href="/dashboard">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Email Scanner</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/url-scanner">
+                    <i class="fa-solid fa-link"></i>
+                    <span>URL Scanner</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/profile">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+
+        </ul>
+
+    </div>
+
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <button class="sidebar-toggle"
+        id="sidebarToggle">
+
+    ☰
+
+</button>
+
+        <!-- TOP NAVBAR -->
+        <div class="top-navbar">
+
+            <h1>Email Scanner</h1>
+
+            <!-- PROFILE -->
+            <div class="profile-dropdown">
+
+                <button type="button"
+                        class="profile-btn"
+                        id="profileButton">
+
+                    <div class="profile-circle">
+                        {{ session['user'][0].upper() }}
+                    </div>
+
+                </button>
+
+                <div class="dropdown-content">
+
+                    <p>
+                        <strong>{{ session['user'] }}</strong>
+                    </p>
+
+                    <p>
+                        {{ session.get('email', 'user@example.com') }}
+                    </p>
+
+                    <hr>
+
+                    <a href="/profile">
+                        <i class="fa-solid fa-user"></i>
+                        My Profile
+                    </a>
+
+                    <a href="/settings">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        Security & Privacy
+                    </a>
+
+                    <a href="/logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Logout
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SCANNER BOX -->
+        <div class="main-container">
+
+            <!-- FORM -->
+            <form method="POST" action="/analyze">
+
+                <div class="input-box">
+
+                    <textarea
+                    name="input_data"
+                    placeholder="Paste suspicious email here..."
+                    required></textarea>
+
+                </div>
+
+                <button type="submit" class="analyze-btn">
+                    Scan Email
+                </button>
+
+            </form>
+
+
+            <!-- RESULT -->
+            <div class="result-wrapper">
+
+                <div class="status-box {{ status|lower if status else 'default' }}">
+                    {{ status if status else "No Result" }}
+                </div>
+
+                <div class="score-box">
+                    <h3>Risk Score</h3>
+                    <p>{{ score if score else "0" }}%</p>
+                </div>
+
+                <div class="reasons-box">
+
+                    <h4>Reasons</h4>
+
+                    <ul>
+
+                        {% if reasons %}
+
+                            {% for reason in reasons %}
+                                <li>• {{ reason }}</li>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <li>No analysis yet</li>
+
+                        {% endif %}
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<h1 class="title">Phishing Threat Detection</h1>
-
-<form onsubmit="event.preventDefault(); analyzeEmail();">
-
-<div class="input-box">
-
-<textarea
-id="inputText"
-placeholder="Paste URL or Email here..."
-required></textarea>
-
-</div>
-
-<button type="submit" class="analyze-btn">Analyze</button>
-
-</form>
-<div class="result-container" style="margin-top:20px; color:white;">
-    <div id="resultBox" class="result-btn"></div>
-
-    <h3>Risk Score: <span id="risk"></span></h3>
-
-    <h4>Reasons:</h4>
-    <ul id="reasons"></ul>
-</div>
-
-</div>
 <script>
-async function analyzeEmail() {
-    const input = document.getElementById("inputText").value;
 
-    const response = await fetch("/scan", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            input: input,
-            sender: "test@gmail.com"
-        })
-    });
+const profileButton =
+    document.querySelector(".profile-btn");
 
-    const data = await response.json();
+const dropdown =
+    document.querySelector(".dropdown-content");
 
-    // Result text
-    const resultBox = document.getElementById("resultBox");
-    resultBox.innerText = data.result;
+profileButton.addEventListener("click", function(e){
 
-    // Color logic
-    resultBox.className = "result-btn";
-    if (data.result === "PHISHING") {
-        resultBox.classList.add("danger-btn");
-    } else if (data.result === "SUSPICIOUS") {
-        resultBox.classList.add("warn-btn");
-    } else {
-        resultBox.classList.add("safe-btn");
+    e.stopPropagation();
+
+    dropdown.classList.toggle("show");
+});
+
+document.addEventListener("click", function(e){
+
+    if (
+        !dropdown.contains(e.target) &&
+        !profileButton.contains(e.target)
+    ) {
+
+        dropdown.classList.remove("show");
     }
+});
 
-    // Risk %
-    document.getElementById("risk").innerText = data.risk + "%";
-
-    // Reasons
-    let reasonsHTML = "";
-    data.reasons.forEach(r => {
-        reasonsHTML += `<li>${r}</li>`;
-    });
-
-    document.getElementById("reasons").innerHTML = reasonsHTML;
-}
 </script>
+<script>
 
+const toggleButton =
+    document.getElementById("sidebarToggle");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+toggleButton.addEventListener("click", () => {
+
+    sidebar.classList.toggle("collapsed");
+});
+
+</script>
 </body>
 </html>
