@@ -1,0 +1,200 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - Screenshot Scam Detector{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- SCANNER HEADER -->
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Screenshot Scam Detector</h1>
+        <p class="text-slate-400 text-sm mt-1">Upload screenshots of websites, login fields, or chat transcripts to audit them for fake branding, fraud alerts, or crypto scams</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- SCAN INPUT BLOCK (LEFT 2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-image text-cyan-400 text-lg"></i>
+                        <h2 class="text-base font-bold text-slate-200">Upload Screenshot</h2>
+                    </div>
+                    <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-mono font-bold font-mono">IMAGE_OCR</span>
+                </div>
+
+                <!-- DRAG & DROP ZONE -->
+                <form id="screenshot-form" enctype="multipart/form-data" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/30 rounded-2xl p-8 transition-colors cursor-pointer relative" id="drop-zone">
+                        <input type="file" name="screenshot" id="screenshot-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                        <i class="fa-solid fa-camera-retro text-4xl text-slate-500 mb-4" id="upload-icon"></i>
+                        <h3 class="text-sm font-semibold text-slate-300" id="file-label">Drag & drop screenshot or click to browse</h3>
+                        <p class="text-xs text-slate-600 mt-1">Supports PNG, JPG, JPEG formats</p>
+                    </div>
+                    
+                    <div class="flex justify-end hidden" id="scan-btn-container">
+                        <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-slate-100 font-semibold rounded-xl text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>Audit Screenshot</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- PREVIEW CONTAINER -->
+                <div class="hidden flex justify-center border border-slate-800 p-4 rounded-2xl bg-slate-950/40" id="preview-container">
+                    <img id="screenshot-preview" class="max-h-64 rounded-xl border border-slate-800" alt="Preview">
+                </div>
+
+                <!-- LOADER -->
+                <div class="hidden flex flex-col items-center justify-center py-8 space-y-3" id="scan-loader">
+                    <i class="fa-solid fa-magnifying-glass-chart animate-pulse text-3xl text-cyan-400"></i>
+                    <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest animate-pulse">Running Visual AI Analysis...</span>
+                </div>
+
+                <!-- REPORT CARD -->
+                <div class="hidden border border-slate-850 p-6 rounded-2xl space-y-6 animate-fade-in" id="report-card">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                        <div>
+                            <span class="text-xs text-slate-500 font-mono font-bold uppercase" id="report-category">Visual Analysis Report</span>
+                            <h3 class="text-lg font-bold text-slate-200 mt-0.5" id="report-verdict-title">No Scan Performed</h3>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="px-3 py-1.5 rounded-lg border font-bold text-xs uppercase" id="report-verdict"></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant analysis description -->
+                    <div class="space-y-2.5">
+                        <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider">CyberBuddy AI Visual Commentary</h4>
+                        <div class="p-4 bg-cyan-950/20 border border-cyan-500/20 rounded-xl text-sm text-cyan-300 leading-relaxed font-mono" id="report-ai-comment"></div>
+                    </div>
+
+                    <!-- Warnings -->
+                    <div class="space-y-2.5">
+                        <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider">Detected Fraud Indicators</h4>
+                        <div class="p-4 bg-slate-950/40 border border-slate-850 rounded-xl space-y-2 text-sm text-slate-300" id="report-warnings"></div>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="border-t border-slate-800 pt-4 grid grid-cols-3 gap-4 text-xs font-mono text-slate-500">
+                        <div>IMAGE TYPE: <span class="text-slate-300" id="meta-type"></span></div>
+                        <div>DIMENSIONS: <span class="text-slate-300" id="meta-dim"></span></div>
+                        <div>FILE SIZE: <span class="text-slate-300" id="meta-size"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXPLAINER (RIGHT 1/3) -->
+        <div class="space-y-6">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 text-sm">
+                <h3 class="text-base font-bold text-slate-200">Visual Scam Auditing</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">Visual scams often rely on fake interfaces (e.g. login spoofing, lock screen warnings, tech support popups). CyberBuddy runs structural analysis of files, metadata, and pixel distribution ratios to flag suspicious branding layout anomalies.</p>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex gap-2 text-slate-400"><i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i> Logo Spoofing / Lookalikes</div>
+                    <div class="flex gap-2 text-slate-400"><i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i> Fake Support Helpline Numbers</div>
+                    <div class="flex gap-2 text-slate-400"><i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i> Phony Crypto Yield Tables</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const qrFile = document.getElementById('screenshot-file');
+    const fileLabel = document.getElementById('file-label');
+    const uploadIcon = document.getElementById('upload-icon');
+    const scanBtnContainer = document.getElementById('scan-btn-container');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImg = document.getElementById('screenshot-preview');
+    const screenshotForm = document.getElementById('screenshot-form');
+    
+    const scanLoader = document.getElementById('scan-loader');
+    const reportCard = document.getElementById('report-card');
+    const reportCategory = document.getElementById('report-category');
+    const reportVerdictTitle = document.getElementById('report-verdict-title');
+    const reportVerdict = document.getElementById('report-verdict');
+    const reportAiComment = document.getElementById('report-ai-comment');
+    const reportWarnings = document.getElementById('report-warnings');
+    
+    const metaType = document.getElementById('meta-type');
+    const metaDim = document.getElementById('meta-dim');
+    const metaSize = document.getElementById('meta-size');
+
+    qrFile.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        fileLabel.innerText = file.name;
+        uploadIcon.className = "fa-solid fa-image text-4xl text-cyan-400";
+        scanBtnContainer.classList.remove('hidden');
+        reportCard.classList.add('hidden');
+
+        // Show Preview
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            previewImg.src = event.target.result;
+            previewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    screenshotForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(screenshotForm);
+        scanLoader.classList.remove('hidden');
+        reportCard.classList.add('hidden');
+
+        fetch('/screenshot-detector', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            scanLoader.classList.add('hidden');
+            if (data.status === "ERROR") {
+                alert("Audit failed: " + data.message);
+                return;
+            }
+
+            // Fill meta
+            metaType.innerText = data.metadata.format || "PNG";
+            metaDim.innerText = `${data.metadata.width}x${data.metadata.height}`;
+            metaSize.innerText = `${(data.metadata.size / 1024).toFixed(1)} KB`;
+
+            // Fill report
+            reportCategory.innerText = data.scam_category;
+            reportVerdictTitle.innerText = "Audit Completed with Findings";
+            reportVerdict.innerText = data.scam_verdict;
+            
+            reportVerdict.className = "px-3 py-1.5 rounded-lg border font-bold text-xs uppercase ";
+            if (data.scam_verdict === "MALICIOUS" || data.scam_verdict === "HIGH RISK") {
+                reportVerdict.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-400');
+            } else if (data.scam_verdict === "SUSPICIOUS") {
+                reportVerdict.classList.add('bg-amber-500/10', 'border-amber-500/30', 'text-amber-400');
+            } else {
+                reportVerdict.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-400');
+            }
+
+            reportAiComment.innerText = data.ai_critique;
+
+            // Fill warnings
+            reportWarnings.innerHTML = "";
+            data.reasons.forEach(warning => {
+                const item = document.createElement('div');
+                item.className = "flex gap-2 items-start";
+                item.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500 mt-0.5"></i> <span>${warning}</span>`;
+                reportWarnings.appendChild(item);
+            });
+
+            reportCard.classList.remove('hidden');
+        })
+        .catch(err => {
+            scanLoader.classList.add('hidden');
+            console.error(err);
+            alert("An error occurred during visual audit.");
+        });
+    });
+</script>
+{% endblock %}

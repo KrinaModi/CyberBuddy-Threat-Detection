@@ -1,7 +1,10 @@
 import re
 
-def extract_features(text):
+def extract_features(text, original_text=None):
     features = {}
+
+    if original_text is None:
+        original_text = text
 
     # 1. Text length
     features['text_length'] = len(text)
@@ -30,7 +33,7 @@ def extract_features(text):
         1 for char in text if not char.isalnum() and not char.isspace()
     )
 
-    # 5. URL presence
-    features['has_url'] = 1 if 'http' in text or 'www' in text else 0
+    # 5. URL presence - Use original_text to avoid data leakage
+    features['has_url'] = 1 if 'http' in original_text or 'www' in original_text else 0
 
     return features

@@ -1,72 +1,119 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<div class="dashboard-card">
-<title>Cyber Buddy</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <title>CyberBuddy Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-
 <body>
 
-<div class="dashboard-card">
+<div class="dashboard-container">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='shield.png') }}" class="sidebar-logo">
+            <h2>Cyber<span>Buddy</span></h2>
+        </div>
+        <!-- USER INFO -->
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                {{ session['username'][0].upper() if session.get('username') else 'U' }}
+            </div>
+            <div>
+                <h4>{{ session.get('username', 'User') }}</h4>
+                <p>Protected User</p>
+            </div>
+        </div>
+        <!-- MENU -->
+        <ul class="sidebar-menu">
+            <li>
+                <a href="/dashboard">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Email Scanner</span>
+                </a>
+            </li>
+            <li>
+                <a href="/logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </div>
 
-<h1>Cyber <span>Buddy</span></h1>
-<p>AI-powered Fake URL & Email Detection</p>
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <button class="sidebar-toggle" id="sidebarToggle">☰</button>
 
-<form action="/analyze" method="POST">
+        <!-- TOP NAVBAR -->
+        <div class="top-navbar">
+            <h1>Threat Scanner</h1>
+            <!-- PROFILE -->
+            <div class="profile-dropdown">
+                <button type="button" class="profile-btn" id="profileButton">
+                    <div class="profile-circle">
+                        {{ session['username'][0].upper() if session.get('username') else 'U' }}
+                    </div>
+                </button>
+                <div class="dropdown-content">
+                    <p><strong>{{ session.get('username', 'User') }}</strong></p>
+                    <hr>
+                    <a href="/logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
 
-<textarea
-name="input_data"
-placeholder="Paste URL or Email here..."
-required></textarea>
+        <!-- SCANNER BOX -->
+        <div class="main-container">
+            <!-- FORM -->
+            <form method="POST" action="/analyze">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="input-box">
+                    <textarea name="input_data" placeholder="Paste suspicious email or URL here..." required></textarea>
+                </div>
+                <button type="submit" class="analyze-btn">Scan Threat</button>
+            </form>
 
-<button type="submit">Analyze Threat</button>
-
-</form>
-
-{% if result %}
-<div class="result-box">
-{{ result }}
+            <!-- RESULT -->
+            <div class="result-wrapper">
+                <div class="status-box {{ 'safe' if result == '✅ Safe' else 'danger' if result else 'default' }}">
+                    {{ result if result else "No Result" }}
+                </div>
+                
+                {% if score is defined %}
+                <div class="score-box">
+                    <h3>Risk Score</h3>
+                    <p>{{ score }}%</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
-{% endif %}
 
-</div>
+<script>
+const profileButton = document.querySelector(".profile-btn");
+const dropdown = document.querySelector(".dropdown-content");
 
-</body>
-</html><!DOCTYPE html>
-<html>
-<head>
-    <title>Cyber Buddy</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
-</head>
+profileButton.addEventListener("click", function(e){
+    e.stopPropagation();
+    dropdown.classList.toggle("show");
+});
 
-<body>
+document.addEventListener("click", function(e){
+    if (!dropdown.contains(e.target) && !profileButton.contains(e.target)) {
+        dropdown.classList.remove("show");
+    }
+});
 
-<div class="auth-card">
-
-<h2>Cyber Buddy</h2>
-<p style="text-align:center;">AI-powered Fake URL & Email Detection</p>
-
-<form action="/analyze" method="POST">
-
-<textarea
-name="input_data"
-placeholder="Paste URL or Email here..."
-style="width:100%; height:90px; padding:10px; margin-top:10px;"
-required></textarea>
-
-<button type="submit">Analyze Threat</button>
-
-</form>
-
-{% if result %}
-<div class="result-box">
-{{ result }}
-</div>
-{% endif %}
-
-</div>
-
+const toggleButton = document.getElementById("sidebarToggle");
+const sidebar = document.querySelector(".sidebar");
+toggleButton.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+});
+</script>
 </body>
 </html>

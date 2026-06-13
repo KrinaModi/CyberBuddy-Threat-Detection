@@ -1,0 +1,70 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Admin Dashboard</h1>
+        <p class="text-slate-400 text-sm mt-1">Global system metrics and user threat landscape oversight</p>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-cyan-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Registered Users</span>
+                <h3 class="text-3xl font-bold text-slate-100">{{ users }}</h3>
+            </div>
+            <div class="p-3 bg-cyan-500/10 rounded-xl text-cyan-400">
+                <i class="fa-solid fa-users text-2xl"></i>
+            </div>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">System Scans (All Users)</span>
+                <h3 class="text-3xl font-bold text-slate-100">{{ urls }}</h3>
+            </div>
+            <div class="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
+                <i class="fa-solid fa-database text-2xl"></i>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-emerald-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Safe Verdicts</span>
+                <h3 class="text-3xl font-bold text-emerald-400">{{ safe }}</h3>
+            </div>
+            <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+                <i class="fa-solid fa-circle-check text-2xl"></i>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-rose-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Malicious/Suspicious Threats</span>
+                <h3 class="text-3xl font-bold text-rose-500">{{ malicious }}</h3>
+            </div>
+            <div class="p-3 bg-rose-500/10 rounded-xl text-rose-500">
+                <i class="fa-solid fa-skull-crossbones text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="glass-card p-6 rounded-2xl border border-slate-800">
+        <h2 class="text-base font-bold text-slate-200 mb-4">Quick Administrator Actions</h2>
+        <div class="flex flex-wrap gap-4">
+            <a href="/admin/users" class="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl transition-all">
+                <i class="fa-solid fa-user-gear text-cyan-400"></i>
+                <span>Manage Users List</span>
+            </a>
+            <a href="/admin/history" class="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl transition-all">
+                <i class="fa-solid fa-table-list text-cyan-400"></i>
+                <span>Audit Scan Logs</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

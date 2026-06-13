@@ -1,0 +1,265 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - Security Awareness Center{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-4xl">
+    <!-- HEADER -->
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Security Awareness Center</h1>
+        <p class="text-slate-400 text-sm mt-1">Test your phishing detection knowledge and view security awareness statistics</p>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- QUIZ BLOCK (LEFT 2/3) -->
+        <div class="md:col-span-2 glass-card p-6 rounded-2xl border border-slate-800 space-y-6" id="quiz-container">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h2 class="text-base font-bold text-slate-200" id="question-header">Phishing Awareness Challenge</h2>
+                <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-mono font-bold" id="question-counter">Question 1/5</span>
+            </div>
+
+            <!-- QUESTION CONTENT -->
+            <div class="space-y-4" id="quiz-question-box">
+                <h3 class="text-sm font-semibold text-slate-100 leading-relaxed" id="question-text">Loading question...</h3>
+                
+                <div class="space-y-3" id="options-box">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-slate-800">
+                <button onclick="nextQuestion()" class="hidden px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-slate-100 font-semibold rounded-xl text-sm transition-all" id="next-btn">
+                    Next Question &rarr;
+                </button>
+                <button onclick="showResults()" class="hidden px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-100 font-semibold rounded-xl text-sm transition-all" id="results-btn">
+                    Complete Challenge
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULTS BLOCK (REPLACES QUIZ UPON COMPLETION) -->
+        <div class="hidden md:col-span-2 glass-card p-6 rounded-2xl border border-slate-800 space-y-6" id="results-container">
+            <div class="text-center py-6 space-y-4">
+                <i class="fa-solid fa-graduation-cap text-5xl text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]"></i>
+                <h2 class="text-2xl font-extrabold text-white">Challenge Completed!</h2>
+                <div class="text-4xl font-extrabold font-mono text-cyan-400" id="score-display">0%</div>
+                <p class="text-slate-400 text-sm max-w-sm mx-auto" id="feedback-text"></p>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="text-sm font-bold uppercase text-slate-500 tracking-wider">Awareness Recommendations</h3>
+                <div class="p-4 bg-slate-950/40 border border-slate-850 rounded-xl text-sm text-slate-300 space-y-3" id="recommendations-box">
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="resetQuiz()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-750 transition-colors">
+                    Restart Challenge
+                </button>
+            </div>
+        </div>
+
+        <!-- INFO WIDGET (RIGHT 1/3) -->
+        <div class="space-y-6">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 text-sm">
+                <h3 class="text-base font-bold text-slate-200">Awareness Statistics</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">Regular training significantly mitigates credential theft vectors across target personnel.</p>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs font-mono mb-1">
+                            <span class="text-slate-400">HUMAN PHISHING RESILIENCE</span>
+                            <span class="text-emerald-400 font-bold">84%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-1">
+                            <div class="bg-emerald-500 h-1" style="width: 84%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-mono mb-1">
+                            <span class="text-slate-400">INCIDENT REPORTING TIME</span>
+                            <span class="text-cyan-400 font-bold">14m</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-1">
+                            <div class="bg-cyan-500 h-1" style="width: 70%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            q: "You receive an email from 'security@paypaI-verify.com' stating your account is suspended due to unusual login attempts. What is the first indicator of a scam?",
+            options: [
+                "The email contains urgent warning terms demanding immediate login",
+                "The domain uses a lookalike spelling 'paypaI' with a capital 'I' instead of 'l'",
+                "The email body lacks personalized user branding details",
+                "All of the above"
+            ],
+            correct: 3,
+            feedback: "Qishing and spoofing emails often combine urgency, lookalike domain letters (typosquatting), and generic greetings to compromise accounts.",
+            rec: "✓ Verify sender addresses character-by-character; pay attention to lookalike replacements (e.g., 'rn' for 'm', 'I' for 'l')."
+        },
+        {
+            q: "A website prompts you to click 'Allow Notifications' to verify that you are not a robot before accessing a document. What is this tactic?",
+            options: [
+                "Standard CAPTCHA verification",
+                "Browser notification hijacking scam",
+                "Safe SSL handshake request",
+                "Ad-blocker warning bypass"
+            ],
+            correct: 1,
+            feedback: "Scammers use fake robot verification pages to trick users into subscribing to browser push notifications, which are subsequently used to flood the desktop with fake antivirus warnings.",
+            rec: "✓ Never click 'Allow Notifications' unless you explicitly trust the service. Safe CAPTCHAs never require browser configuration changes."
+        },
+        {
+            q: "Which protocol verification alone does NOT guarantee a website is secure from phishing?",
+            options: [
+                "HTTPS (Presence of padlock icon)",
+                "DNS record resolution",
+                "TLS certificate expiration date",
+                "WHOIS registrar listing"
+            ],
+            correct: 0,
+            feedback: "HTTPS only encrypts the transfer protocol; it does not verify site integrity. Phishing sites frequently deploy free SSL certificates to display secure lock icons.",
+            rec: "✓ Do not assume a site is safe just because it uses HTTPS. Always check domain registry names."
+        },
+        {
+            q: "You receive an SMS alert claiming a high-value parcel delivery is on hold. The message provides a shortened link 'bit.ly/track-item'. What is the safest response?",
+            options: [
+                "Open the link to inspect delivery details before inputting bank cards",
+                "Ignore the link and verify status directly using the official logistics portal",
+                "Reply to the message demanding sender verification",
+                "Forward the SMS to contacts to verify its authenticity"
+            ],
+            correct: 1,
+            feedback: "Smishing (SMS Phishing) utilizes URL shorteners to mask malicious redirect chains. Verification should always bypass the message context completely.",
+            rec: "✓ Treat unsolicited URL shorteners as high-risk indicators. Always contact providers via official support numbers."
+        },
+        {
+            q: "What is the primary objective of a 'credential harvester' page?",
+            options: [
+                "Installing keyloggers onto target hosts",
+                "Encrypting desktop files for ransom payloads",
+                "Mimicking branded sign-in portals to record usernames and passwords",
+                "Injecting ad banners into search results"
+            ],
+            correct: 2,
+            feedback: "Credential harvesters clone popular interfaces (e.g. Outlook, Google, Bank accounts) so users input logins directly into attacker databases.",
+            rec: "✓ Deploy multi-factor authentication (MFA) everywhere. Even if credentials are harvested, MFA prevents unauthorized login sessions."
+        }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+    let selectedAns = null;
+    let recommendations = [];
+
+    const questionCounter = document.getElementById('question-counter');
+    const questionText = document.getElementById('question-text');
+    const optionsBox = document.getElementById('options-box');
+    const nextBtn = document.getElementById('next-btn');
+    const resultsBtn = document.getElementById('results-btn');
+    
+    const quizContainer = document.getElementById('quiz-container');
+    const resultsContainer = document.getElementById('results-container');
+    const scoreDisplay = document.getElementById('score-display');
+    const feedbackText = document.getElementById('feedback-text');
+    const recsBox = document.getElementById('recommendations-box');
+
+    function loadQuestion() {
+        selectedAns = null;
+        nextBtn.classList.add('hidden');
+        resultsBtn.classList.add('hidden');
+
+        const item = quizData[currentIdx];
+        questionCounter.innerText = `Question ${currentIdx + 1}/${quizData.length}`;
+        questionText.innerText = item.q;
+        optionsBox.innerHTML = "";
+
+        item.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left p-4 bg-slate-950/40 border border-slate-800 hover:border-cyan-500/50 rounded-xl transition-all font-mono text-xs flex justify-between items-center";
+            btn.innerHTML = `<span>${opt}</span><i class="fa-regular fa-circle text-slate-600"></i>`;
+            btn.onclick = () => selectOption(idx, btn);
+            optionsBox.appendChild(btn);
+        });
+    }
+
+    function selectOption(idx, buttonEl) {
+        if (selectedAns !== null) return; // prevent re-select
+        
+        selectedAns = idx;
+        const item = quizData[currentIdx];
+        
+        const optionButtons = optionsBox.querySelectorAll('button');
+        optionButtons.forEach((btn, bIdx) => {
+            btn.onclick = null; // disable clicks
+            const icon = btn.querySelector('i');
+            if (bIdx === item.correct) {
+                btn.className = "w-full text-left p-4 bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 rounded-xl font-mono text-xs flex justify-between items-center";
+                icon.className = "fa-solid fa-circle-check";
+            } else if (bIdx === selectedAns) {
+                btn.className = "w-full text-left p-4 bg-rose-500/10 border border-rose-500/40 text-rose-400 rounded-xl font-mono text-xs flex justify-between items-center";
+                icon.className = "fa-solid fa-circle-xmark";
+            }
+        });
+
+        if (idx === item.correct) {
+            score++;
+        } else {
+            recommendations.push(item.rec);
+        }
+
+        if (currentIdx < quizData.length - 1) {
+            nextBtn.classList.remove('hidden');
+        } else {
+            resultsBtn.classList.remove('hidden');
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        quizContainer.classList.add('hidden');
+        resultsContainer.classList.remove('hidden');
+        
+        const percentage = Math.round((score / quizData.length) * 100);
+        scoreDisplay.innerText = `${percentage}%`;
+
+        if (percentage === 100) {
+            feedbackText.innerText = "Excellent score! You demonstrated solid cybersecurity awareness and verified threat vectors flawlessly.";
+            recsBox.innerHTML = "<div>✓ Perfect analysis. Continue maintaining vigilant check steps across all incoming text metrics.</div>";
+        } else {
+            feedbackText.innerText = `You scored ${score}/${quizData.length}. Review the safety guidelines below to reinforce your defensive capabilities against phishing attacks.`;
+            recsBox.innerHTML = "";
+            const uniqueRecs = [...new Set(recommendations)];
+            uniqueRecs.forEach(rec => {
+                const item = document.createElement('div');
+                item.className = "py-1 border-b border-slate-900 last:border-none";
+                item.innerText = rec;
+                recsBox.appendChild(item);
+            });
+        }
+    }
+
+    function resetQuiz() {
+        currentIdx = 0;
+        score = 0;
+        recommendations = [];
+        resultsContainer.classList.add('hidden');
+        quizContainer.classList.remove('hidden');
+        loadQuestion();
+    }
+
+    // Init
+    loadQuestion();
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - Email NLP Phishing Scanner{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- SCANNER HEADER -->
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Email NLP Phishing Scanner</h1>
+        <p class="text-slate-400 text-sm mt-1">Analyze email text using Natural Language Processing models to flag credential-harvesting language and urgency markers</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- SCAN INPUT BLOCK (LEFT 2/3) -->
+        <div class="lg:col-span-2 space-y-8">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                <div class="flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+                    <h2 class="text-lg font-bold text-slate-200">Email Text Content Input</h2>
+                </div>
+                
+                <form action="/analyze" method="POST" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="relative">
+                        <textarea name="input_data" rows="5" placeholder="Paste raw email body here (e.g., URGENT: Verify your credentials now or your account will be suspended!)..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-sm font-mono text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all resize-none" required></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-slate-100 font-semibold rounded-xl text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                            <i class="fa-solid fa-fingerprint"></i>
+                            <span>Scan Content</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            {% if result and scan_type == 'EMAIL' %}
+            <!-- SCAN RESULT DISPLAY -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 gap-4">
+                    <div>
+                        <div class="text-xs font-mono uppercase text-slate-500">Analysis Output</div>
+                        <h2 class="text-xl font-bold tracking-tight text-slate-200 mt-1 truncate max-w-md font-mono">{{ target|truncate(60) }}</h2>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="flex flex-col items-center">
+                            <div class="relative h-20 w-20 flex items-center justify-center">
+                                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                                <div class="absolute inset-0 rounded-full border-4 {% if classification == 'Malicious' %} border-rose-500 text-glow-red {% elif classification == 'Suspicious' %} border-amber-500 {% else %} border-emerald-500 {% endif %} opacity-80" style="clip-path: polygon(0 0, 100% 0, 100% {{ score }}%, 0 {{ score }}%);"></div>
+                                <span class="text-xl font-bold text-slate-100">{{ score }}%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 rounded-xl border flex flex-col justify-center items-center text-center w-32
+                            {% if classification == 'Malicious' %} bg-rose-500/10 border-rose-500/30 text-rose-400
+                            {% elif classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/30 text-amber-400
+                            {% else %} bg-emerald-500/10 border-emerald-500/30 text-emerald-400
+                            {% endif %}">
+                            <span class="text-[9px] uppercase tracking-widest font-bold opacity-60">Verdict</span>
+                            <span class="text-base font-extrabold tracking-wide mt-1 uppercase">{{ classification }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Threat Indicators -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">Threat Explanation Details</h3>
+                    <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 space-y-2.5">
+                        {% for reason in explanation %}
+                        <div class="text-sm flex items-start gap-2.5">
+                            <span class="mt-0.5 shrink-0">
+                                {% if '✓' in reason %}
+                                    <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                {% elif '✗' in reason %}
+                                    <i class="fa-solid fa-circle-xmark text-rose-500"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-circle-info text-cyan-400"></i>
+                                {% endif %}
+                            </span>
+                            <span class="text-slate-300">{{ reason|replace('✓', '')|replace('✗', '')|replace('ℹ️', '')|trim }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- AI Commentary -->
+                {% if ai_commentary %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">CyberBuddy AI Assistant Analysis</h3>
+                    <div class="bg-cyan-950/20 border border-cyan-500/20 rounded-xl p-4 text-sm text-cyan-300 leading-relaxed font-mono">
+                        {{ ai_commentary }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Explainable AI -->
+                {% if nlp_analysis and nlp_analysis.top_features %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">Explainable AI (Feature Word Weights)</h3>
+                    <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 space-y-2">
+                        <div class="text-xs text-slate-500">The NLP classifier identified the following terms as indicators of credential harvesting language:</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {% for item in nlp_analysis.top_features %}
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-between">
+                                <span class="font-mono text-cyan-300 text-xs font-semibold">{{ item.word }}</span>
+                                <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded font-mono font-bold">+{{ (item.contribution * 10)|round(2) }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- STATS & INFO WIDGETS (RIGHT 1/3) -->
+        <div class="space-y-8">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 text-sm">
+                <h3 class="text-base font-bold text-slate-200">Email Analysis Pipeline</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">The Natural Language Processing system isolates text contents, cleans stop words, extracts custom keyword ratios, and predicts malicious probability.</p>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex gap-2 text-slate-300"><i class="fa-solid fa-circle-check text-cyan-400 mt-0.5"></i> TF-IDF Vector Space Analysis</div>
+                    <div class="flex gap-2 text-slate-300"><i class="fa-solid fa-circle-check text-cyan-400 mt-0.5"></i> Urgency Vocabulary Density</div>
+                    <div class="flex gap-2 text-slate-300"><i class="fa-solid fa-circle-check text-cyan-400 mt-0.5"></i> Social Engineering Identifiers</div>
+                    <div class="flex gap-2 text-slate-300"><i class="fa-solid fa-circle-check text-cyan-400 mt-0.5"></i> Embedded URL OSINT routing</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

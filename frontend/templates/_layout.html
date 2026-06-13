@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CyberBuddy SOC{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#030712',
+                            card: '#0b1329',
+                            glow: '#00f0ff',
+                            success: '#10b981',
+                            warning: '#f59e0b',
+                            danger: '#ef4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Premium custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+        /* Glow animations and glassmorphism utilities */
+        .glass-card {
+            background: rgba(11, 19, 41, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+        .text-glow-cyan {
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+        }
+        .text-glow-red {
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full font-sans text-slate-200 antialiased flex">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+        <div>
+            <!-- Sidebar Header -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
+                <i class="fa-solid fa-shield-halved text-cyan-400 text-2xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"></i>
+                <span class="font-bold text-lg tracking-wider bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">CYBERBUDDY</span>
+                <span class="text-[9px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest border border-cyan-500/20">SOC</span>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-16rem)]">
+                <div class="text-[9px] font-bold tracking-widest text-slate-500 uppercase px-4 pb-1">Core Console</div>
+                <a href="/dashboard" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/dashboard' or request.path == '/' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-chart-line text-base w-5 text-center"></i>
+                    <span>SOC Dashboard</span>
+                </a>
+                <a href="/intel" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/intel' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-radar text-base w-5 text-center"></i>
+                    <span>Threat Intel Feed</span>
+                </a>
+                <a href="/history" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/history' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-list-check text-base w-5 text-center"></i>
+                    <span>Scan History</span>
+                </a>
+
+                <div class="pt-3 text-[9px] font-bold tracking-widest text-slate-500 uppercase px-4 pb-1">Scanners</div>
+                <a href="/url-scanner" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/url-scanner' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-link text-base w-5 text-center"></i>
+                    <span>URL OSINT Scanner</span>
+                </a>
+                <a href="/email-scanner" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/email-scanner' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-envelope text-base w-5 text-center"></i>
+                    <span>Email NLP Scanner</span>
+                </a>
+                <a href="/qr-scanner" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/qr-scanner' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-qrcode text-base w-5 text-center"></i>
+                    <span>QR Code Scanner</span>
+                </a>
+                <a href="/screenshot-detector" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/screenshot-detector' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-image text-base w-5 text-center"></i>
+                    <span>Screenshot Detector</span>
+                </a>
+
+                <div class="pt-3 text-[9px] font-bold tracking-widest text-slate-500 uppercase px-4 pb-1">Defenses</div>
+                <a href="/password-analyzer" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/password-analyzer' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-key text-base w-5 text-center"></i>
+                    <span>Password Analyzer</span>
+                </a>
+                <a href="/awareness" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/awareness' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-graduation-cap text-base w-5 text-center"></i>
+                    <span>Awareness Quiz</span>
+                </a>
+
+                <div class="pt-3 text-[9px] font-bold tracking-widest text-slate-500 uppercase px-4 pb-1">Account</div>
+                <a href="/profile" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/profile' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-user text-base w-5 text-center"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="/settings" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/settings' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-gear text-base w-5 text-center"></i>
+                    <span>Security Settings</span>
+                </a>
+                
+                {% if session.get('is_admin') %}
+                <div class="pt-3 pb-1">
+                    <span class="px-4 text-[9px] font-bold tracking-widest text-slate-500 uppercase">Administration</span>
+                </div>
+                <a href="/admin" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/admin' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-shield-virus text-base w-5 text-center"></i>
+                    <span>Admin Panel</span>
+                </a>
+                <a href="/admin/users" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/admin/users' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-users text-base w-5 text-center"></i>
+                    <span>Manage Users</span>
+                </a>
+                <a href="/admin/history" class="flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {% if request.path == '/admin/history' %} bg-cyan-600/10 text-cyan-400 border-l-2 border-cyan-500 {% else %} text-slate-400 hover:bg-slate-800 hover:text-slate-100 {% endif %}">
+                    <i class="fa-solid fa-database text-base w-5 text-center"></i>
+                    <span>All System Scans</span>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer / Profile -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-9 w-9 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400">
+                        {{ session.get('username', 'U')[0].upper() }}
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="text-sm font-semibold truncate text-slate-200">{{ session.get('username', 'User') }}</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{% if session.get('is_admin') %}Administrator{% else %}Analyst{% endif %}</span>
+                    </div>
+                </div>
+                <a href="/logout" class="text-slate-500 hover:text-rose-400 transition-colors p-1.5 rounded-md hover:bg-slate-800" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN APP WRAPPER -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        
+        <!-- HEADER -->
+        <header class="h-16 border-b border-slate-800 bg-slate-900/30 backdrop-blur flex items-center justify-between px-8 shrink-0">
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-semibold text-slate-400">System Status:</span>
+                <span class="flex items-center gap-1.5 text-xs font-bold bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    ALL SYSTEMS NOMINAL
+                </span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <span class="text-xs font-mono text-slate-500">API ACTIVE: v2.1.0</span>
+            </div>
+        </header>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 p-8">
+            <!-- FLASH MESSAGES -->
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="mb-6 space-y-2">
+                  {% for message in messages %}
+                    <div class="p-4 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-sm flex items-center gap-2">
+                      <i class="fa-solid fa-circle-info"></i>
+                      <span>{{ message }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>
