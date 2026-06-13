@@ -1,0 +1,204 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - QR Code Threat Scanner{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- SCANNER HEADER -->
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">QR Code Threat Scanner</h1>
+        <p class="text-slate-400 text-sm mt-1">Upload QR code images to extract encoded URLs and perform instant OSINT threat analysis</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- SCAN INPUT BLOCK (LEFT 2/3) -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-qrcode text-cyan-400 text-lg"></i>
+                        <h2 class="text-base font-bold text-slate-200">Upload QR Image Indicator</h2>
+                    </div>
+                    <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded font-mono font-bold font-mono">IMAGE_INGESTION</span>
+                </div>
+
+                <!-- DRAG & DROP ZONE -->
+                <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/30 rounded-2xl p-8 transition-colors cursor-pointer relative" id="drop-zone">
+                    <input type="file" id="qr-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-500 mb-4" id="upload-icon"></i>
+                    <h3 class="text-sm font-semibold text-slate-300" id="file-label">Drag & drop QR image or click to browse</h3>
+                    <p class="text-xs text-slate-600 mt-1">Supports PNG, JPG, JPEG formats</p>
+                </div>
+
+                <!-- DECODED INFO CARD -->
+                <div class="hidden space-y-4" id="decoded-card">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">Extracted Target</h3>
+                    <div class="p-4 bg-slate-950/70 border border-slate-850 rounded-xl flex items-center justify-between gap-4">
+                        <div class="font-mono text-sm text-cyan-300 truncate font-semibold" id="decoded-text">No target extracted</div>
+                        <button onclick="startThreatAnalysis()" class="shrink-0 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-100 text-xs font-semibold rounded-lg transition-all" id="scan-button">
+                            Scan Extracted URL
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LOADER -->
+                <div class="hidden flex flex-col items-center justify-center py-8 space-y-3" id="scan-loader">
+                    <i class="fa-solid fa-spinner animate-spin text-3xl text-cyan-400"></i>
+                    <span class="text-xs font-mono text-cyan-400 uppercase tracking-widest animate-pulse">Running OSINT Engines...</span>
+                </div>
+
+                <!-- REPORT CARD -->
+                <div class="hidden border border-slate-850 p-6 rounded-2xl space-y-6" id="report-card">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                        <div>
+                            <span class="text-xs text-slate-500 font-mono font-bold uppercase">Verdict Report</span>
+                            <h3 class="text-lg font-bold text-slate-200 mt-0.5 font-mono" id="report-target"></h3>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="text-sm font-extrabold text-slate-200 font-mono" id="report-score"></div>
+                                <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Risk Severity</span>
+                            </div>
+                            <div class="px-3 py-1.5 rounded-lg border font-bold text-xs uppercase" id="report-verdict"></div>
+                        </div>
+                    </div>
+
+                    <!-- Reasons -->
+                    <div class="space-y-2.5">
+                        <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider">Analysis Reasons</h4>
+                        <div class="p-4 bg-slate-950/40 border border-slate-850 rounded-xl space-y-2 text-sm text-slate-300" id="report-reasons"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONSOLE EXPLAINER (RIGHT 1/3) -->
+        <div class="space-y-6">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4 text-sm">
+                <h3 class="text-base font-bold text-slate-200">QR Threat Vectors</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">Phishing campaigns utilize QR codes (Qishing) to bypass security gateway scanners, driving victims to malicious links. CyberBuddy parses the image locally, extracts the payload, and scans the target domain.</p>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex gap-2 text-slate-400"><i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i> Lookalike Login Phishing</div>
+                    <div class="flex gap-2 text-slate-400"><i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i> Malicious APK Downloads</div>
+                    <div class="flex gap-2 text-slate-400"><i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i> Social Infiltration Links</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CANVAS DECODING LOGIC & API TRIGGER -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+    const qrFile = document.getElementById('qr-file');
+    const dropZone = document.getElementById('drop-zone');
+    const decodedCard = document.getElementById('decoded-card');
+    const decodedText = document.getElementById('decoded-text');
+    const fileLabel = document.getElementById('file-label');
+    const uploadIcon = document.getElementById('upload-icon');
+    const scanLoader = document.getElementById('scan-loader');
+    const reportCard = document.getElementById('report-card');
+    const reportTarget = document.getElementById('report-target');
+    const reportScore = document.getElementById('report-score');
+    const reportVerdict = document.getElementById('report-verdict');
+    const reportReasons = document.getElementById('report-reasons');
+
+    let extractedUrl = "";
+
+    qrFile.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        fileLabel.innerText = file.name;
+        uploadIcon.className = "fa-solid fa-file-image text-4xl text-cyan-400";
+        reportCard.classList.add('hidden');
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                // Create Canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                
+                const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code) {
+                    extractedUrl = code.data;
+                    decodedText.innerText = extractedUrl;
+                    decodedCard.classList.remove('hidden');
+                } else {
+                    decodedText.innerText = "Error: Could not decode QR code. Ensure it is high resolution and centered.";
+                    decodedCard.classList.remove('hidden');
+                    document.getElementById('scan-button').classList.add('hidden');
+                }
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function startThreatAnalysis() {
+        if (!extractedUrl) return;
+
+        scanLoader.classList.remove('hidden');
+        reportCard.classList.add('hidden');
+
+        fetch('/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ input: extractedUrl })
+        })
+        .then(res => res.json())
+        .then(data => {
+            scanLoader.classList.add('hidden');
+            if (data.result === "ERROR") {
+                alert("Scan failed: " + data.reasons.join(", "));
+                return;
+            }
+
+            reportTarget.innerText = extractedUrl;
+            reportScore.innerText = data.risk + "%";
+            
+            // Set classification styles
+            const verdict = data.result === "PHISHING" ? "Malicious" : "Safe";
+            reportVerdict.innerText = verdict;
+            reportVerdict.className = "px-3 py-1.5 rounded-lg border font-bold text-xs uppercase ";
+            if (verdict === "Malicious") {
+                reportVerdict.classList.add('bg-rose-500/10', 'border-rose-500/30', 'text-rose-400');
+            } else {
+                reportVerdict.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-400');
+            }
+
+            // Fill explanations
+            reportReasons.innerHTML = "";
+            data.explanation.forEach(reason => {
+                const item = document.createElement('div');
+                item.className = "flex gap-2 items-start";
+                let icon = '<i class="fa-solid fa-circle-info text-cyan-400 mt-0.5"></i>';
+                if (reason.includes('✓')) icon = '<i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>';
+                if (reason.includes('✗')) icon = '<i class="fa-solid fa-circle-xmark text-rose-500 mt-0.5"></i>';
+                item.innerHTML = `${icon} <span>${reason.replace(/[✓✗ℹ️]/g, '').trim()}</span>`;
+                reportReasons.appendChild(item);
+            });
+
+            reportCard.classList.remove('hidden');
+        })
+        .catch(err => {
+            scanLoader.classList.add('hidden');
+            console.error(err);
+            alert("An error occurred during scanning.");
+        });
+    }
+</script>
+{% endblock %}

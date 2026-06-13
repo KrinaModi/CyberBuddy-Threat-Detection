@@ -1,0 +1,362 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - SOC Threat Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- DASHBOARD HEADER -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Threat Intelligence Dashboard</h1>
+            <p class="text-slate-400 text-sm mt-1">Dual-Engine Phishing & URL OSINT Scanner</p>
+        </div>
+        <div class="text-right">
+            <span class="text-xs font-mono text-slate-500">SESSION: ACTIVE</span>
+            <div class="text-xs text-slate-400">Welcome, {{ session.get('username') }}</div>
+        </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-cyan-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Investigations</span>
+                <h3 class="text-3xl font-bold text-slate-100">{{ total_scans|default(0) }}</h3>
+            </div>
+            <div class="p-3 bg-cyan-500/10 rounded-xl text-cyan-400">
+                <i class="fa-solid fa-folder-open text-2xl"></i>
+            </div>
+        </div>
+        
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-emerald-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Safe Scans</span>
+                <h3 class="text-3xl font-bold text-emerald-400">{{ safe_scans|default(0) }}</h3>
+            </div>
+            <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+                <i class="fa-solid fa-circle-check text-2xl"></i>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-amber-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Suspicious Hits</span>
+                <h3 class="text-3xl font-bold text-amber-400">{{ suspicious_scans|default(0) }}</h3>
+            </div>
+            <div class="p-3 bg-amber-500/10 rounded-xl text-amber-400">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl flex items-center justify-between border-l-4 border-rose-500 glow-hover transition-all">
+            <div class="space-y-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Malicious Threats</span>
+                <h3 class="text-3xl font-bold text-rose-500">{{ malicious_scans|default(0) }}</h3>
+            </div>
+            <div class="p-3 bg-rose-500/10 rounded-xl text-rose-500">
+                <i class="fa-solid fa-skull-crossbones text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCANNERS SECTION -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- SCAN TERMINAL INPUT (LEFT 2/3 COLUMN) -->
+        <div class="lg:col-span-2 space-y-8">
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+                            <h2 class="text-lg font-bold tracking-tight text-slate-200">Terminal Scanner Input</h2>
+                        </div>
+                        <span class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded font-mono">DUAL_ENGINE</span>
+                    </div>
+                    <p class="text-slate-400 text-xs mb-6">Enter a suspicious URL or paste a raw email body below. The system automatically routes to the appropriate detection pipeline.</p>
+                </div>
+                
+                <form action="/analyze" method="POST" id="scan-form" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="relative">
+                        <textarea name="input_data" rows="5" placeholder="Paste URL (e.g. www.paypal-verify.com) or paste email content..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-sm font-mono text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all shadow-inner resize-none" required></textarea>
+                        <div class="absolute bottom-3 right-3 text-[10px] text-slate-600 font-mono">
+                            UTF-8 | RAW_DATA
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-slate-500">Rate Limit: Max 50/hr</span>
+                        <button type="submit" id="submit-btn" class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-slate-100 font-semibold rounded-xl text-sm transition-all shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                            <i class="fa-solid fa-fingerprint animate-pulse"></i>
+                            <span>Analyze Indicators</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- SCAN RESULTS WINDOW (SHOWS ONLY IF RESULT PRESENT) -->
+            {% if result %}
+            <div id="results-container" class="glass-card p-6 rounded-2xl border border-slate-800 space-y-6 scroll-mt-6">
+                <!-- Header with Classify and Risk Score -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 gap-4">
+                    <div>
+                        <div class="text-xs font-mono uppercase text-slate-500">Scan Results for Indicator</div>
+                        <h2 class="text-xl font-bold tracking-tight text-slate-200 mt-1 truncate max-w-md font-mono">{{ target|truncate(60) }}</h2>
+                        <div class="flex items-center gap-2 mt-2">
+                            <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">TYPE: {{ scan_type }}</span>
+                            <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">DATE: {{ timestamp.strftime('%Y-%m-%d %H:%M:%S') if timestamp else 'Just now' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <!-- Custom Risk Gauge -->
+                        <div class="flex flex-col items-center">
+                            <div class="relative h-20 w-20 flex items-center justify-center">
+                                <!-- Outer circle -->
+                                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                                <div class="absolute inset-0 rounded-full border-4 {% if classification == 'Malicious' %} border-rose-500 text-glow-red {% elif classification == 'Suspicious' %} border-amber-500 {% else %} border-emerald-500 {% endif %} opacity-80" style="clip-path: polygon(0 0, 100% 0, 100% {{ score }}%, 0 {{ score }}%);"></div>
+                                <span class="text-xl font-bold text-slate-100">{{ score }}%</span>
+                            </div>
+                            <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1.5">THREAT RISK</span>
+                        </div>
+                        
+                        <!-- Verdict Box -->
+                        <div class="p-4 rounded-xl border flex flex-col justify-center items-center text-center w-32
+                            {% if classification == 'Malicious' %} bg-rose-500/10 border-rose-500/30 text-rose-400
+                            {% elif classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/30 text-amber-400
+                            {% else %} bg-emerald-500/10 border-emerald-500/30 text-emerald-400
+                            {% endif %}">
+                            <span class="text-[9px] uppercase tracking-widest font-bold opacity-60">Classification</span>
+                            <span class="text-base font-extrabold tracking-wide mt-1 uppercase">{{ classification }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explanation Breakdown -->
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">Threat Indicators & Explanation</h3>
+                    <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 space-y-2.5">
+                        {% if explanation %}
+                            {% for reason in explanation %}
+                                <div class="text-sm flex items-start gap-2.5 leading-relaxed">
+                                    <span class="mt-0.5 shrink-0">
+                                        {% if '✓' in reason %}
+                                            <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                        {% elif '✗' in reason %}
+                                            <i class="fa-solid fa-circle-xmark text-rose-500"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-circle-info text-cyan-400"></i>
+                                        {% endif %}
+                                    </span>
+                                    <span class="text-slate-300">{{ reason|replace('✓', '')|replace('✗', '')|replace('ℹ️', '')|trim }}</span>
+
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-sm text-slate-500 italic">No indicators reported.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Geolocation/OSINT or NLP details -->
+                {% if scan_type == 'URL' and domain_info %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">Domain OSINT Metadata</h3>
+                        <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 space-y-3 text-sm font-mono">
+                            <div class="flex justify-between border-b border-slate-900 pb-1.5">
+                                <span class="text-slate-500">IP ADDRESS:</span>
+                                <span class="text-cyan-400 font-semibold">{{ domain_info.ip }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-900 pb-1.5">
+                                <span class="text-slate-500">REGISTRAR:</span>
+                                <span class="text-slate-300 text-right">{{ domain_info.registrar }}</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-900 pb-1.5">
+                                <span class="text-slate-500">COUNTRY:</span>
+                                <span class="text-slate-300">{{ domain_info.country }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">ISP/ASN:</span>
+                                <span class="text-slate-300 truncate max-w-[180px]">{{ domain_info.isp }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">VirusTotal Detection Ratio</h3>
+                        <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-center items-center h-[134px]">
+                            {% if vt_data %}
+                            <div class="text-3xl font-extrabold {% if vt_data.malicious_hits > 0 %} text-rose-500 {% else %} text-emerald-400 {% endif %}">{{ vt_data.malicious_hits }} / {{ (vt_data.malicious_hits + vt_data.harmless_hits) }}</div>
+                            <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Vendor Flag Ratio</div>
+                            <div class="w-full bg-slate-900 rounded-full h-1.5 mt-3 overflow-hidden border border-slate-800">
+                                <div class="bg-rose-500 h-1.5" style="width: {{ (vt_data.malicious_hits / (vt_data.malicious_hits + vt_data.harmless_hits) * 100) if (vt_data.malicious_hits + vt_data.harmless_hits) > 0 else 0 }}%"></div>
+                            </div>
+                            {% else %}
+                            <span class="text-slate-500 italic">No reputation stats resolved.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% elif scan_type == 'EMAIL' and nlp_analysis and nlp_analysis.top_features %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold tracking-wider uppercase text-slate-400">Explainable AI (NLP Feature Weights)</h3>
+                    <div class="bg-slate-950/40 border border-slate-800/80 rounded-xl p-4">
+                        <div class="text-xs text-slate-500 mb-3">The model highlighted the following keywords as primary factors increasing the threat risk classification:</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {% for item in nlp_analysis.top_features %}
+                            <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-between">
+                                <span class="font-mono text-cyan-300 text-xs font-semibold">{{ item.word }}</span>
+                                <span class="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded font-mono font-bold">+{{ (item.contribution * 10)|round(2) }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Export Report Action -->
+                <div class="flex justify-end pt-4 border-t border-slate-800">
+                    <a href="/report/{{ scan_id }}" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-colors border border-slate-700">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Export Threat Report</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- CHARTS & LATEST SCANS (RIGHT 1/3 COLUMN) -->
+        <div class="space-y-8">
+            
+            <!-- CHARTS WIDGET -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 flex flex-col items-center">
+                <div class="w-full flex items-center justify-between mb-6">
+                    <h2 class="text-base font-bold text-slate-200">Threat Indicators</h2>
+                    <i class="fa-solid fa-chart-pie text-slate-500"></i>
+                </div>
+                
+                <div class="h-48 w-48 relative mb-4 flex items-center justify-center">
+                    <canvas id="threatDoughnutChart"></canvas>
+                </div>
+                
+                <div class="w-full grid grid-cols-3 gap-2 text-center text-xs mt-2">
+                    <div class="p-2 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
+                        <div class="text-emerald-400 font-bold">{{ safe_scans|default(0) }}</div>
+                        <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Safe</div>
+                    </div>
+                    <div class="p-2 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                        <div class="text-amber-400 font-bold">{{ suspicious_scans|default(0) }}</div>
+                        <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Suspicious</div>
+                    </div>
+                    <div class="p-2 bg-rose-500/5 border border-rose-500/10 rounded-lg">
+                        <div class="text-rose-400 font-bold">{{ malicious_scans|default(0) }}</div>
+                        <div class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Malicious</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK LATEST SCANS FEED -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-200">Recent Logs</h2>
+                    <a href="/history" class="text-xs text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">View All</a>
+                </div>
+
+                <div class="space-y-3">
+                    {% if recent_scans %}
+                        {% for scan in recent_scans %}
+                        <div class="p-3 bg-slate-900/50 border border-slate-800/60 rounded-xl flex items-center justify-between gap-3 text-xs">
+                            <div class="min-w-0 flex-1 space-y-1">
+                                <div class="font-mono truncate text-slate-300 font-semibold">{{ scan.target }}</div>
+                                <div class="flex items-center gap-1.5 text-slate-500 text-[10px]">
+                                    <span class="uppercase">{{ scan.scan_type }}</span>
+                                    <span>•</span>
+                                    <span>{{ scan.timestamp.strftime('%H:%M:%S') }}</span>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded font-mono font-bold tracking-wider uppercase border text-[10px] shrink-0
+                                {% if scan.classification == 'Malicious' %} bg-rose-500/10 border-rose-500/20 text-rose-400
+                                {% elif scan.classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/20 text-amber-400
+                                {% else %} bg-emerald-500/10 border-emerald-500/20 text-emerald-400
+                                {% endif %}">
+                                {{ scan.classification }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-xs text-slate-500 italic text-center py-4">No recent scans.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Initialize Doughnut Chart using Chart.js
+    const safeCount = {{ safe_scans|default(0) }};
+    const suspCount = {{ suspicious_scans|default(0) }};
+    const malCount = {{ malicious_scans|default(0) }};
+    
+    // Fallback display if no items scanned yet
+    const dataCounts = (safeCount === 0 && suspCount === 0 && malCount === 0) ? [1, 0, 0] : [safeCount, suspCount, malCount];
+    const borderColors = ['rgba(16, 185, 129, 0.4)', 'rgba(245, 158, 11, 0.4)', 'rgba(239, 68, 68, 0.4)'];
+    const hoverBgColors = ['#10b981', '#f59e0b', '#ef4444'];
+    
+    const ctx = document.getElementById('threatDoughnutChart').getContext('2d');
+    const threatChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Safe', 'Suspicious', 'Malicious'],
+            datasets: [{
+                data: dataCounts,
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.15)',
+                    'rgba(245, 158, 11, 0.15)',
+                    'rgba(239, 68, 68, 0.15)'
+                ],
+                borderColor: [
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444'
+                ],
+                borderWidth: 1.5,
+                hoverBackgroundColor: hoverBgColors,
+                hoverBorderColor: hoverBgColors,
+                hoverBorderWidth: 1
+            }]
+        },
+        options: {
+            cutout: '75%',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: (safeCount > 0 || suspCount > 0 || malCount > 0),
+                    backgroundColor: '#0f172a',
+                    titleColor: '#cbd5e1',
+                    bodyColor: '#94a3b8',
+                    borderColor: '#334155',
+                    borderWidth: 1,
+                    displayColors: false
+                }
+            }
+        }
+    });
+
+    // Auto-scroll to scan results if present
+    document.addEventListener("DOMContentLoaded", function() {
+        const resultsEl = document.getElementById("results-container");
+        if (resultsEl) {
+            resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+</script>
+{% endblock %}

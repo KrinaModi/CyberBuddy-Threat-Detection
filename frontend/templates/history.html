@@ -1,0 +1,187 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - Investigation Logs{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- HISTORY HEADER -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Investigation Logs</h1>
+            <p class="text-slate-400 text-sm mt-1">Audit trail of all scanned indicators and threat classifications</p>
+        </div>
+        <button onclick="exportToCSV()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-100 text-xs font-semibold rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+            <i class="fa-solid fa-file-csv text-base"></i>
+            <span>Export CSV Report</span>
+        </button>
+    </div>
+
+    <!-- SEARCH & FILTER BAR -->
+    <div class="glass-card p-4 rounded-2xl border border-slate-800 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="relative md:col-span-2">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500"></i>
+            <input type="text" id="log-search" oninput="filterLogs()" placeholder="Search target indicators, domains, or keywords..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm font-mono text-cyan-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors">
+        </div>
+        <div>
+            <select id="filter-type" onchange="filterLogs()" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors">
+                <option value="ALL">All Types</option>
+                <option value="URL">URLs</option>
+                <option value="EMAIL">Emails</option>
+            </select>
+        </div>
+        <div>
+            <select id="filter-class" onchange="filterLogs()" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-cyan-500 transition-colors">
+                <option value="ALL">All Verdicts</option>
+                <option value="Safe">Safe</option>
+                <option value="Suspicious">Suspicious</option>
+                <option value="Malicious">Malicious</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- LOGS TABLE -->
+    <div class="glass-card rounded-2xl border border-slate-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left" id="logs-table">
+                <thead>
+                    <tr class="border-b border-slate-800 bg-slate-900/50 text-[10px] font-bold tracking-widest text-slate-500 uppercase font-mono">
+                        <th class="px-6 py-4 w-28">Type</th>
+                        <th class="px-6 py-4">Target Indicator</th>
+                        <th class="px-6 py-4 w-32">Threat Score</th>
+                        <th class="px-6 py-4 w-32">Verdict</th>
+                        <th class="px-6 py-4 w-44">Date</th>
+                        <th class="px-6 py-4 w-28 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 text-sm">
+                    {% if history %}
+                        {% for scan in history %}
+                        <tr class="hover:bg-slate-900/30 transition-colors font-mono log-row" 
+                            data-type="{{ scan.scan_type }}" 
+                            data-verdict="{{ scan.classification }}">
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-0.5 rounded font-bold tracking-wider text-[9px] uppercase border
+                                    {% if scan.scan_type == 'URL' %} bg-sky-500/10 border-sky-500/20 text-sky-400
+                                    {% else %} bg-indigo-500/10 border-indigo-500/20 text-indigo-400
+                                    {% endif %}">
+                                    {{ scan.scan_type }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 max-w-xs truncate text-slate-300 font-semibold log-target" title="{{ scan.target }}">
+                                {{ scan.target }}
+                            </td>
+                            <td class="px-6 py-4 font-bold text-slate-300">
+                                {{ scan.risk_score }}%
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-0.5 rounded font-bold tracking-wider text-[9px] uppercase border
+                                    {% if scan.classification == 'Malicious' %} bg-rose-500/10 border-rose-500/20 text-rose-400
+                                    {% elif scan.classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/20 text-amber-400
+                                    {% else %} bg-emerald-500/10 border-emerald-500/20 text-emerald-400
+                                    {% endif %}">
+                                    {{ scan.classification }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-500">
+                                {{ scan.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="/report/{{ scan.id }}" target="_blank" class="inline-flex items-center justify-center p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 rounded border border-slate-700 transition-colors" title="Export Report">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr id="empty-row">
+                            <td colspan="6" class="px-6 py-12 text-slate-500 text-center italic">
+                                <i class="fa-solid fa-magnifying-glass text-2xl block mb-2 text-slate-700"></i>
+                                No scan history matches your selection.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterLogs() {
+        const query = document.getElementById("log-search").value.toLowerCase();
+        const typeFilter = document.getElementById("filter-type").value;
+        const classFilter = document.getElementById("filter-class").value;
+        const rows = document.querySelectorAll(".log-row");
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const target = row.querySelector(".log-target").innerText.toLowerCase();
+            const type = row.getAttribute("data-type");
+            const verdict = row.getAttribute("data-verdict");
+
+            const matchesQuery = target.includes(query);
+            const matchesType = (typeFilter === "ALL" || type === typeFilter);
+            const matchesClass = (classFilter === "ALL" || verdict === classFilter);
+
+            if (matchesQuery && matchesType && matchesClass) {
+                row.style.display = "";
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        // Toggle empty display row
+        let emptyRow = document.getElementById("empty-row");
+        if (visibleCount === 0) {
+            if (!emptyRow) {
+                const tbody = document.querySelector("#logs-table tbody");
+                const tr = document.createElement("tr");
+                tr.id = "empty-row";
+                tr.innerHTML = `
+                    <td colspan="6" class="px-6 py-12 text-slate-500 text-center italic">
+                        <i class="fa-solid fa-magnifying-glass text-2xl block mb-2 text-slate-700"></i>
+                        No scan history matches your selection.
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            } else {
+                emptyRow.style.display = "";
+            }
+        } else {
+            if (emptyRow) {
+                emptyRow.style.display = "none";
+            }
+        }
+    }
+
+    function exportToCSV() {
+        const rows = document.querySelectorAll(".log-row");
+        if (rows.length === 0) {
+            alert("No logs to export.");
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,Type,Target,Threat Score,Verdict,Timestamp\n";
+
+        rows.forEach(row => {
+            if (row.style.display !== "none") {
+                const type = row.getAttribute("data-type");
+                const target = row.querySelector(".log-target").getAttribute("title").replace(/"/g, '""');
+                const score = row.cells[2].innerText.replace('%', '').trim();
+                const verdict = row.getAttribute("data-verdict");
+                const date = row.cells[4].innerText.trim();
+                csvContent += `"${type}","${target}",${score},"${verdict}","${date}"\n`;
+            }
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `cyberbuddy_threat_logs_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

@@ -3,3 +3,10 @@ numpy
 pandas
 scikit-learn
 joblib
+nltk
+Flask-SQLAlchemy
+pytest
+Flask-WTF
+python-dotenv
+imblearn
+flask-limiter

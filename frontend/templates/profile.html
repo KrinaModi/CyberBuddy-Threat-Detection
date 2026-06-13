@@ -1,0 +1,92 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - User Profile{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-4xl">
+    <!-- PROFILE HEADER -->
+    <div>
+        <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Analyst Profile</h1>
+        <p class="text-slate-400 text-sm mt-1">Manage personal metrics and system access permissions</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- LEFT: AVATAR CARD -->
+        <div class="glass-card p-6 rounded-2xl border border-slate-800 flex flex-col items-center text-center space-y-4">
+            <div class="h-24 w-24 rounded-full bg-cyan-500/10 border-2 border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400 text-4xl shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+                {{ user.username[0].upper() if user else 'U' }}
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-slate-100">{{ user.name or user.username }}</h2>
+                <p class="text-xs text-slate-500 font-mono mt-1 uppercase tracking-wider">{{ user.role }}</p>
+            </div>
+            <div class="w-full border-t border-slate-800 pt-4 text-xs font-mono text-left space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-slate-500">USER ID:</span>
+                    <span class="text-slate-300">#{{ user.id }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">MEMBER SINCE:</span>
+                    <span class="text-slate-300">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">LAST LOGIN:</span>
+                    <span class="text-slate-300">{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Just now' }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: STATS & DETAILS -->
+        <div class="md:col-span-2 space-y-6">
+            <!-- GENERAL INFO -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                <h3 class="text-base font-bold text-slate-200 border-b border-slate-800 pb-3">Identity Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-xs text-slate-500 uppercase font-bold">Username</span>
+                        <div class="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl font-mono text-slate-300 mt-1">
+                            {{ user.username }}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs text-slate-500 uppercase font-bold">Email Address</span>
+                        <div class="p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl font-mono text-slate-300 mt-1">
+                            {{ user.email }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCANS METRICS -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                <h3 class="text-base font-bold text-slate-200 border-b border-slate-800 pb-3">Analysis Metrics</h3>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="p-4 bg-slate-900/40 border border-slate-850 rounded-xl">
+                        <span class="text-2xl font-extrabold text-cyan-400 font-mono">{{ total_scans }}</span>
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Total Scans</div>
+                    </div>
+                    <div class="p-4 bg-slate-900/40 border border-slate-850 rounded-xl">
+                        <span class="text-2xl font-extrabold text-rose-400 font-mono">{{ threat_scans }}</span>
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Threats Logged</div>
+                    </div>
+                    <div class="p-4 bg-slate-900/40 border border-slate-850 rounded-xl">
+                        <span class="text-2xl font-extrabold text-emerald-400 font-mono">{{ safe_scans }}</span>
+                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Safe Verdicts</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API SUBSCRIPTION MOCK -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <div class="space-y-1">
+                    <h4 class="text-sm font-bold text-slate-200">CyberBuddy Developer API</h4>
+                    <p class="text-xs text-slate-400">Current Plan: <span class="text-cyan-400 font-semibold">Free Sandbox (50 scans/hr limit)</span></p>
+                </div>
+                <button class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-750 transition-all">
+                    Request API Key
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

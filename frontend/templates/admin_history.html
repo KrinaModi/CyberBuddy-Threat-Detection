@@ -1,0 +1,84 @@
+{% extends "_layout.html" %}
+
+{% block title %}CyberBuddy - System Logs Audit{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- HEADER -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Global Audit Logs</h1>
+            <p class="text-slate-400 text-sm mt-1">Full system logs tracking scans performed by all analysts</p>
+        </div>
+        <a href="/admin" class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold rounded-lg transition-all">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Admin Dashboard</span>
+        </a>
+    </div>
+
+    <!-- TABLE -->
+    <div class="glass-card rounded-2xl border border-slate-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left">
+                <thead>
+                    <tr class="border-b border-slate-800 bg-slate-900/50 text-[10px] font-bold tracking-widest text-slate-500 uppercase font-mono">
+                        <th class="px-6 py-4 w-20">ID</th>
+                        <th class="px-6 py-4 w-24">Type</th>
+                        <th class="px-6 py-4">Target Indicator</th>
+                        <th class="px-6 py-4 w-24">Verdict</th>
+                        <th class="px-6 py-4 w-28">Score</th>
+                        <th class="px-6 py-4 w-32">Analyst</th>
+                        <th class="px-6 py-4 w-44">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 text-sm">
+                    {% if history %}
+                        {% for scan in history %}
+                        <tr class="hover:bg-slate-900/30 transition-colors font-mono">
+                            <td class="px-6 py-4 text-slate-500">
+                                #{{ scan.id }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-0.5 rounded font-bold tracking-wider text-[9px] uppercase border
+                                    {% if scan.scan_type == 'URL' %} bg-sky-500/10 border-sky-500/20 text-sky-400
+                                    {% else %} bg-indigo-500/10 border-indigo-500/20 text-indigo-400
+                                    {% endif %}">
+                                    {{ scan.scan_type }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 max-w-xs truncate text-slate-300 font-semibold" title="{{ scan.target }}">
+                                {{ scan.target }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-0.5 rounded font-bold tracking-wider text-[9px] uppercase border
+                                    {% if scan.classification == 'Malicious' %} bg-rose-500/10 border-rose-500/20 text-rose-400
+                                    {% elif scan.classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/20 text-amber-400
+                                    {% else %} bg-emerald-500/10 border-emerald-500/20 text-emerald-400
+                                    {% endif %}">
+                                    {{ scan.classification }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 font-bold text-slate-300">
+                                {{ scan.risk_score }}%
+                            </td>
+                            <td class="px-6 py-4 text-slate-300">
+                                {{ scan.user.username if scan.user else 'System' }}
+                            </td>
+                            <td class="px-6 py-4 text-xs text-slate-500">
+                                {{ scan.timestamp.strftime('%Y-%m-%d %H:%M:%S') if scan.timestamp else 'N/A' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-slate-500 text-center italic">
+                                No investigations recorded on this system.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

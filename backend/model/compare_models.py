@@ -12,7 +12,7 @@ from utils.features import extract_features
 
 # Load dataset
 data = pd.read_csv('datasets/email_dataset.csv')
-data['cleaned_text'] = data['text_or_url'].apply(clean_text)
+data['cleaned_text'] = data['email'].apply(clean_text)
 
 # Extract features
 feature_data = data['cleaned_text'].apply(extract_features)
