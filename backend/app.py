@@ -15,6 +15,7 @@ from utils.preprocessing import clean_text
 from utils.features import extract_features
 from utils.email_nlp import EmailNLPScanner
 from utils.url_osint import scan_url_osint
+from utils.screenshot_ocr import scan_screenshot
 from utils.explanation import generate_threat_explanation
 from utils.ai_assistant import generate_ai_analysis
 from datetime import datetime
@@ -87,7 +88,7 @@ def seed_users():
 
 # Safe database initialization (Apply expanded schema without losing data)
 import sys
-if "pytest" not in sys.modules:
+if "pytest" not in sys.modules and "PYTEST_CURRENT_TEST" not in os.environ:
     with app.app_context():
         db_dir = os.path.join(app.instance_path)
         db_file = os.path.join(db_dir, "database.db")
@@ -124,6 +125,133 @@ try:
 except Exception as e:
     print(f"Error initializing EmailNLPScanner: {e}")
     email_scanner = None
+
+
+def send_otp_email(to_email, otp):
+    smtp_email = os.environ.get("SMTP_EMAIL")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+    
+    if not smtp_email or not smtp_password or "your-gmail-here" in smtp_email:
+        print("[WARNING] SMTP credentials not fully configured in .env. Falling back to console log.")
+        return False
+        
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from email.utils import formataddr
+        
+        msg = MIMEMultipart('alternative')
+        msg['From'] = formataddr(("CyberBuddy Security Team", smtp_email))
+        msg['To'] = to_email
+        msg['Subject'] = f"🛡️ CyberBuddy Security Verification Code: {otp}"
+        
+        text_body = f"""Hello,
+
+Your security verification OTP code is: {otp}
+
+This code is required to complete your registration on CyberBuddy. If you did not request this code, please ignore this email.
+
+Stay secure,
+CyberBuddy Security Team"""
+
+        html_body = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Your Email</title>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #020617;
+            color: #e2e8f0;
+            padding: 30px;
+            margin: 0;
+        }}
+        .container {{
+            max-width: 500px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 35px;
+            margin: 0 auto;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }}
+        .logo {{
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 25px;
+            letter-spacing: -0.5px;
+        }}
+        .highlight {{
+            color: #22d3ee;
+        }}
+        h2 {{
+            font-size: 20px;
+            color: #f1f5f9;
+            margin-top: 0;
+            font-weight: 600;
+        }}
+        p {{
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+        }}
+        .otp-box {{
+            font-size: 36px;
+            font-weight: 800;
+            color: #22d3ee;
+            letter-spacing: 6px;
+            background: rgba(34, 211, 238, 0.08);
+            padding: 18px 25px;
+            border-radius: 12px;
+            display: inline-block;
+            margin: 25px 0;
+            border: 1px solid rgba(34, 211, 238, 0.25);
+            font-family: monospace;
+        }}
+        .footer {{
+            font-size: 11px;
+            color: #475569;
+            margin-top: 35px;
+            border-top: 1px solid #1e293b;
+            padding-top: 20px;
+            line-height: 1.5;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🛡️ Cyber<span class="highlight">Buddy</span></div>
+        <h2>Security Verification</h2>
+        <p>You are receiving this verification request because you initiated registration on the CyberBuddy Threat Detection Portal.</p>
+        <p>Please use the following 6-digit passcode to finalize your credentials:</p>
+        <div class="otp-box">{otp}</div>
+        <p style="font-size: 12px; color: #64748b;">This code is valid for 10 minutes. If you did not initiate this request, please change your credentials immediately.</p>
+        <div class="footer">
+            CyberBuddy – Threat Intelligence & SOC Diagnostics<br>
+            © 2026 CyberBuddy Team. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>"""
+
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(smtp_email, smtp_password)
+        server.sendmail(smtp_email, to_email, msg.as_string())
+        server.quit()
+        
+        print(f"[SUCCESS] OTP email successfully sent to {to_email}")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to send OTP email to {to_email}: {e}")
+        return False
 
 
 # Auth Decorator
@@ -191,15 +319,25 @@ def register():
         if existing_user:
             return render_template("register.html", message="Username or Email already exists")
 
-        hashed_password = generate_password_hash(password)
-        is_admin = User.query.count() == 0 # First user is admin
-        new_user = User(username=username, email=email, password_hash=hashed_password, is_admin=is_admin)
+        is_admin = User.query.count() == 0
+        new_user = User(
+            username=username,
+            email=email,
+            password_hash=generate_password_hash(password),
+            is_admin=is_admin
+        )
         db.session.add(new_user)
         db.session.commit()
 
+        flash("Account registered successfully! Please login.")
         return redirect("/")
 
     return render_template("register.html")
+
+@app.route("/verify-otp", methods=["GET", "POST"])
+def verify_otp():
+    return redirect("/")
+
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():
@@ -219,7 +357,41 @@ def forgot_password():
         user.password_hash = generate_password_hash(temp_password)
         db.session.commit()
         
-        flash(f"Temporary password generated: {temp_password}. Please login and change it.")
+        # Check SMTP configuration
+        smtp_email = os.environ.get("SMTP_EMAIL")
+        smtp_password = os.environ.get("SMTP_PASSWORD")
+        
+        email_sent = False
+        if smtp_email and smtp_password and "your-gmail-here" not in smtp_email:
+            try:
+                import smtplib
+                from email.mime.text import MIMEText
+                from email.mime.multipart import MIMEMultipart
+                from email.utils import formataddr
+                
+                msg = MIMEMultipart('alternative')
+                msg['From'] = formataddr(("CyberBuddy Security Team", smtp_email))
+                msg['To'] = user.email
+                msg['Subject'] = f"🛡️ CyberBuddy Password Reset Request"
+                
+                text_body = f"Hello,\n\nYour temporary password is: {temp_password}\n\nPlease login and change it immediately.\n\nStay secure,\nCyberBuddy Team"
+                msg.attach(MIMEText(text_body, 'plain'))
+                
+                server = smtplib.SMTP("smtp.gmail.com", 587)
+                server.starttls()
+                server.login(smtp_email, smtp_password)
+                server.sendmail(smtp_email, user.email, msg.as_string())
+                server.quit()
+                email_sent = True
+            except Exception as e:
+                print(f"[ERROR] Failed to send reset email: {e}")
+                
+        if email_sent:
+            flash("A temporary password has been sent to your email address.")
+        else:
+            # Print to console log in development environment to prevent leakage
+            print(f"\n[SECURITY SIMULATION] Password reset requested for {user.username}. Temporary password generated: {temp_password}\n")
+            flash("A temporary password has been generated and logged to the server console. Please check server logs.")
         return redirect("/")
 
     return render_template("forgot_password.html")
@@ -231,8 +403,8 @@ def forgot_password():
 def dashboard():
     scans_q = ScanHistory.query.filter_by(user_id=session['user_id'])
     total_scans = scans_q.count()
-    malicious_scans = scans_q.filter(ScanHistory.classification == "Malicious").count()
-    suspicious_scans = scans_q.filter(ScanHistory.classification == "Suspicious").count()
+    malicious_scans = scans_q.filter(ScanHistory.classification.in_(["Malicious", "High Risk"])).count()
+    suspicious_scans = scans_q.filter(ScanHistory.classification.in_(["Suspicious", "Low Risk"])).count()
     safe_scans = scans_q.filter(ScanHistory.classification == "Safe").count()
     recent_scans = scans_q.order_by(ScanHistory.id.desc()).limit(5).all()
     
@@ -248,7 +420,7 @@ def dashboard():
 def evaluate_threat(text):
     # Determine if input is a URL
     cleaned_input = text.strip()
-    is_url = cleaned_input.startswith(("http://", "https://", "www.")) or (
+    is_url = cleaned_input.lower().startswith(("http://", "https://", "www.")) or (
         "." in cleaned_input.split("/")[0] and len(cleaned_input.split("/")[0]) > 3
     )
     
@@ -318,8 +490,8 @@ def analyze():
     # Query stats for dashboard render
     scans_q = ScanHistory.query.filter_by(user_id=session['user_id'])
     total_scans = scans_q.count()
-    malicious_scans = scans_q.filter(ScanHistory.classification == "Malicious").count()
-    suspicious_scans = scans_q.filter(ScanHistory.classification == "Suspicious").count()
+    malicious_scans = scans_q.filter(ScanHistory.classification.in_(["Malicious", "High Risk"])).count()
+    suspicious_scans = scans_q.filter(ScanHistory.classification.in_(["Suspicious", "Low Risk"])).count()
     safe_scans = scans_q.filter(ScanHistory.classification == "Safe").count()
     recent_scans = scans_q.order_by(ScanHistory.id.desc()).limit(5).all()
     
@@ -487,72 +659,36 @@ def screenshot_detector():
             return jsonify({"status": "ERROR", "message": "No file selected"})
             
         try:
-            # Process screenshot details using Pillow (PIL)
+            # Read image bytes and run OCR + CV analysis
+            img_bytes = file.read()
+            file_size = len(img_bytes)
+            
             from PIL import Image as PILImage
-            img = PILImage.open(file.stream)
-            img_format = img.format
-            width, height = img.size
+            import io
+            img_pil = PILImage.open(io.BytesIO(img_bytes))
+            img_format = img_pil.format or "PNG"
+            width, height = img_pil.size
             
-            # Simple length/name checks to generate mock results for demo
-            filename_lower = file.filename.lower()
+            # Audit screenshot using local deep-learning-free OCR
+            analysis = scan_screenshot(img_bytes)
             
-            scam_verdict = "SAFE"
-            scam_category = "General Website Screenshot"
-            ai_critique = "Visual analysis detects standard content layouts. No credential forms or threat warnings detected."
-            reasons = ["✓ No login fields detected in the primary frame.", "✓ Standard navigation ratios check out."]
+            scam_verdict = analysis["classification"].upper() # SAFE, LOW RISK, SUSPICIOUS, HIGH RISK, MALICIOUS
+            scam_category = analysis["category"]
+            ai_critique = analysis["ai_critique"]
+            reasons = analysis["reasons"]
             
-            if any(k in filename_lower for k in ["scam", "paypal", "login", "bank", "secure", "warning"]):
-                scam_verdict = "HIGH RISK"
-                scam_category = "Credential Harvester (Fake Login Page)"
-                ai_critique = (
-                    "Visual AI Assessment: The screenshot contains logos and input layout forms resembling major banking/billing portals. "
-                    "However, comparison against official templates detects misalignment in visual branding elements, non-standard layout ratios, "
-                    "and lack of verification badges. This is highly indicative of a credential harvester designed to log user credentials."
-                )
-                reasons = [
-                    "✗ Brand spoofing indicators: Mismatched logo aspect ratios detected.",
-                    "✗ Urgent action button placement overlays standard login configurations.",
-                    "✗ Unverified address bar details in simulated frame."
-                ]
-            elif any(k in filename_lower for k in ["crypto", "giveaway", "bitcoin", "ethereum", "double"]):
-                scam_verdict = "HIGH RISK"
-                scam_category = "Crypto Giveaway / Doubler Scheme"
-                ai_critique = (
-                    "Visual AI Assessment: Text OCR and layout checks identify promises of double-returns or cryptocurrency giveaways. "
-                    "This template matches known social engineering scams designed to steal crypto tokens."
-                )
-                reasons = [
-                    "✗ Urgent return claims detected in text overlays.",
-                    "✗ Unregistered wallet address indicators."
-                ]
-            elif any(k in filename_lower for k in ["alert", "error", "virus", "tech"]):
-                scam_verdict = "SUSPICIOUS"
-                scam_category = "Tech Support / Scareware Alert"
-                ai_critique = (
-                    "Visual AI Assessment: Fake warning prompts or scareware popups detected. "
-                    "These alerts urge immediate contact to lookalike support numbers."
-                )
-                reasons = [
-                    "✗ Fake system threat alerts mimicking official OS notifications.",
-                    "✗ Presence of unsolicited helpline phone numbers."
-                ]
-                
-            # Log to DB as a screenshot scan simulation
+            # Log to DB as a screenshot scan record
             scan = ScanHistory(
                 user_id=session['user_id'],
                 scan_type="SCREENSHOT",
                 target=file.filename,
-                risk_score=95 if scam_verdict == "HIGH RISK" else 50 if scam_verdict == "SUSPICIOUS" else 10,
-                classification="Malicious" if scam_verdict == "HIGH RISK" else "Suspicious" if scam_verdict == "SUSPICIOUS" else "Safe",
+                risk_score=analysis["risk_score"],
+                classification=analysis["classification"],
                 threat_explanation=reasons,
                 domain_info={"scam_category": scam_category, "file_name": file.filename}
             )
             db.session.add(scan)
             db.session.commit()
-            
-            # Get stream size
-            file.stream.seek(0, 2)
-            file_size = file.stream.tell()
             
             return jsonify({
                 "status": "SUCCESS",
@@ -637,7 +773,8 @@ def admin_login():
             session['is_admin'] = True
             
             # Update last login
-            user.last_login = datetime.utcnow()
+            from datetime import timezone
+            user.last_login = datetime.now(timezone.utc).replace(tzinfo=None)
             db.session.commit()
             
             return redirect("/admin")

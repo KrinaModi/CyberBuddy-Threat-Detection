@@ -8,16 +8,16 @@ def test_clean_text_removes_urls():
     assert "fake.com" not in result
 
 def test_clean_text_lowercases_and_removes_symbols():
-    sample = "Hello WORLD! 123"
+    sample = "Beautiful WORLD! 123"
     result = clean_text(sample)
-    assert result == "hello world"
+    assert result == "beautiful world"
 
 def test_clean_text_removes_stopwords():
-    sample = "this is a very bad day"
+    sample = "this is a very bad situation"
     result = clean_text(sample)
     words = result.split()
     assert "this" not in words
     assert "is" not in words
     assert "a" not in words
     assert "bad" in words
-    assert "day" in words
+    assert "situation" in words

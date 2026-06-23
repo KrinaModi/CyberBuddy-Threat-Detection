@@ -1,7 +1,8 @@
 import requests
 import time
+import os
 
-API_KEY = "8f600656464cc1b095265dc2f56de64805f013e40a2c254e7f99ee02d56ec1af"
+API_KEY = os.environ.get("VIRUSTOTAL_API_KEY", "8f600656464cc1b095265dc2f56de64805f013e40a2c254e7f99ee02d56ec1af")
 
 def scan_url(url):
     headers = {

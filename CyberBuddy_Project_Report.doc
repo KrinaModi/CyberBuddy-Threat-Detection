@@ -1,0 +1,273 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>CyberBuddy Threat Detection - Technical Project Documentation</title>
+    <style>
+        body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; line-height: 1.5; color: #1e293b; }
+        h1 { color: #0284c7; border-bottom: 2px solid #0284c7; padding-bottom: 5px; font-size: 20pt; font-weight: bold; }
+        h2 { color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 3px; margin-top: 30px; font-size: 14pt; font-weight: bold; }
+        h3 { color: #334155; margin-top: 20px; font-size: 12pt; font-weight: bold; }
+        p, li { font-size: 11pt; color: #334155; }
+        ul, ol { margin-top: 5px; margin-bottom: 15px; }
+        li { margin-bottom: 5px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; margin-bottom: 20px; }
+        th, td { border: 1px solid #cbd5e1; text-align: left; padding: 8px; font-size: 10pt; }
+        th { background-color: #f8fafc; font-weight: bold; color: #0f172a; }
+        pre, code { font-family: 'Consolas', 'Courier New', monospace; background-color: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 9.5pt; color: #0f172a; }
+        .highlight { color: #0284c7; font-weight: bold; }
+        .verdict-safe { color: #10b981; font-weight: bold; }
+        .verdict-threat { color: #ef4444; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ CyberBuddy – Threat Detection System: Technical Project Documentation</h1>
+
+    <h2>1. Project Overview</h2>
+    
+    <h3>Project Title</h3>
+    <p><strong>CyberBuddy – Threat Detection System</strong><br/>
+    <em>Sub-title/Objective:</em> Performance Enhancement of Threat Detection of Fake URLs and Emails using Machine Learning.</p>
+
+    <h3>Original Project Idea</h3>
+    <p>The project was originally envisioned as a simple Flask-based text classification tool. It was meant to ingest a string (either email text or a website link), clean it, run basic feature extraction (counting a few hardcoded suspicious keywords), and output a "Phishing" or "Safe" prediction using a small machine learning model.</p>
+
+    <h3>Current Project Objective</h3>
+    <p>CyberBuddy has evolved into an advanced, multi-vector <strong>Security Operations Center (SOC) Threat Detection Portal</strong>. It acts as a diagnostic gateway that evaluates threat indicators across four main pathways:</p>
+    <ul>
+        <li><strong>Email NLP Scanner:</strong> An NLP classification engine utilizing TF-IDF text representation and a Logistic Regression classifier trained on a 3,000+ row dataset.</li>
+        <li><strong>URL OSINT Scanner:</strong> A granular domain scanner analyzing DNS resolutions, registrant age via RDAP, geographic hosting locations via GeoIP, structural entropy (DGA detection), and vendor reputation via the VirusTotal API.</li>
+        <li><strong>QR Code Scanner:</strong> A client-side visual decoder (utilizing canvas parsing and the <code>jsQR</code> library) that extracts embedded links and scans them through the URL OSINT pipeline.</li>
+        <li><strong>Screenshot Scam Detector:</strong> A visual threat analysis engine that uses computer vision (OpenCV contour detection) to count input form fields, extracts text via RapidOCR, and classifies the image into threat categories (e.g., Credential Harvesters, Crypto Giveaway Schemes, or Tech Support Alerts).</li>
+    </ul>
+
+    <hr/>
+
+    <h2>2. Project Evolution</h2>
+
+    <h3>How the Project Started</h3>
+    <p>The repository originated as a barebones Flask server. It suffered from:</p>
+    <ul>
+        <li><strong>A Dangerously Small Dataset:</strong> The machine learning model was trained on an <code>email_dataset.csv</code> containing only 8 rows of dummy data, leading to severe overfitting.</li>
+        <li><strong>Fragmented Architecture:</strong> Essential scripts like <code>url_scanner.py</code> (legacy VirusTotal API interface), <code>obfuscation.py</code>, and <code>consistency.py</code> were present in the codebase but never imported or used by <code>app.py</code>.</li>
+        <li><strong>Raw Git Merge Conflicts:</strong> Critical files (<code>train_enhanced.py</code>, <code>login.html</code>, and <code>register.html</code>) contained raw <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> markers, making the app unrunnable.</li>
+        <li><strong>Security Gaps:</strong> Password resets were unauthenticated (allowing anyone to change any password by just entering a username and email), Flask was left with <code>debug=True</code> in production, database scans were not logged, and forms lacked CSRF tokens.</li>
+    </ul>
+
+    <h3>Major Changes and Improvements Made Over Time</h3>
+    <ol>
+        <li><strong>Git Conflict Resolution:</strong> Manually cleaned and merged the code blocks in <code>train_enhanced.py</code>, <code>login.html</code>, and <code>register.html</code>, selecting a high-fidelity Tailwind layout.</li>
+        <li><strong>Dataset Upgrading &amp; Model Retraining:</strong> Upgraded the training pipeline (<code>ml_pipeline/train.py</code>) to fetch a real-world dataset of 3,000+ emails from public spam corpuses. Swapped baseline feature extraction (raw word counts) for a robust <code>TfidfVectorizer</code> (max 3,000 features, min document frequency of 2) paired with a balanced-weight Logistic Regression classifier.</li>
+        <li><strong>Relational Database Ingestion:</strong> Replaced the flat database structure. Developed the <code>ScanHistory</code> model in <code>models.py</code> referencing the <code>User</code> model via foreign keys, enabling real-time logging and display of user and administrator investigation logs.</li>
+        <li><strong>Multi-Factored OSINT Engine:</strong> Upgraded the URL scanner from a single VirusTotal call to a complex, multi-factored diagnostic pipeline that inspects unsecured HTTP protocols, DNS resolution status, generic/high-risk TLD matches, brand lookalike keywords (lookalike domains), URL parameters and length, Shannon Entropy of second-level domains (DGA detection), URL Shortener service masking, and domain registration age in days via RDAP queries.</li>
+        <li><strong>Adding Visual Scan Modules:</strong> Created the visual screenshot auditor (<code>screenshot_ocr.py</code>) leveraging OCR text extraction and computer vision contour analysis, and the QR Code parser (<code>qr_scanner.html</code>).</li>
+        <li><strong>Administrative Panel Development:</strong> Exposed back-end routes for serving administrative pages (<code>admin_dashboard.html</code>, <code>admin_users.html</code>, <code>admin_history.html</code>) and implemented role checks (<code>admin_required</code> decorators) to manage user accounts and global audit logs safely.</li>
+        <li><strong>Production Hardening:</strong> Enforced CSRF tokens via <code>Flask-WTF</code>, integrated API rate-limiting via <code>Flask-Limiter</code>, secured session keys with environment fallbacks, and cleaned up password validation fields.</li>
+    </ol>
+
+    <hr/>
+
+    <h2>3. Current Architecture</h2>
+
+    <h3>Folder Structure</h3>
+    <p>The repository is split into a clear backend-frontend division:</p>
+    <ul>
+        <li><strong>datasets/</strong>: Contains <code>email_dataset.csv</code> (3,000+ row email corpus).</li>
+        <li><strong>backend/</strong>: Contains the main backend logic:
+            <ul>
+                <li><code>app.py</code>: Main Flask router, database initializations, routes.</li>
+                <li><code>models.py</code>: SQLAlchemy schemas (User and ScanHistory models).</li>
+                <li><code>test_integration.py</code>, <code>test_features.py</code>, <code>test_preprocessing.py</code>: Automated test suites.</li>
+                <li><code>requirements.txt</code>: Python package requirements.</li>
+                <li><code>ml_pipeline/</code>: Automated training pipeline scripts.</li>
+                <li><code>model/</code>: Serialized classifiers (<code>threat_model.pkl</code> and <code>vectorizer.pkl</code>) and baseline training files.</li>
+                <li><code>utils/</code>: Core modular scanners and utilities (<code>url_osint.py</code>, <code>email_nlp.py</code>, <code>screenshot_ocr.py</code>, <code>scoring.py</code>, <code>explanation.py</code>, <code>ai_assistant.py</code>, <code>preprocessing.py</code>, <code>features.py</code>, <code>report_gen.py</code>).</li>
+            </ul>
+        </li>
+        <li><strong>frontend/</strong>: Contains frontend interfaces:
+            <ul>
+                <li><code>static/</code>: Assets and stylesheets.</li>
+                <li><code>templates/</code>: Jinja2 templates (dashboard, scanners, account configurations, admin logs, etc.).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>Data Flow</h3>
+    <ol>
+        <li><strong>Input Ingestion:</strong> Users submit text or links in the SOC Terminal, or upload images (screenshots / QR codes).</li>
+        <li><strong>Preprocessing &amp; Ingestion:</strong> Image uploads are audited using client-side QR decoders or backend RapidOCR/OpenCV pipelines. Text is cleaned of special characters and stopwords.</li>
+        <li><strong>Engine Routing:</strong> Inputs are checked. Domains trigger the OSINT Scanner; raw email bodies pass through the ML classification vector space.</li>
+        <li><strong>Verdict Synthesis:</strong> The threat scores (0-100) are mapped to standard classifications, logged in SQLite, and rendered with custom visual charts and AI analysis explanations.</li>
+    </ol>
+
+    <hr/>
+
+    <h2>4. Module Breakdown</h2>
+
+    <h3>URL OSINT Scanner</h3>
+    <p><strong>Purpose:</strong> Analyze domain indicators of compromise (IOCs) for potential phishing, lookalike structures, or domain generation algorithm (DGA) signatures.</p>
+    <p><strong>How it Works:</strong></p>
+    <ol>
+        <li>Extracts the clean host domain from the URL input.</li>
+        <li>Resolves the host IP address using Python's <code>socket.gethostbyname</code>.</li>
+        <li>Queries <code>ip-api.com</code> for the hosting country, ISP, and city.</li>
+        <li>Makes an RDAP request to <code>rdap.org</code> to look up the registrar and domain registration date, calculating domain age in days.</li>
+        <li>Performs string metrics analysis: counts dots, checks for hyphens, flags generic high-risk TLDs (e.g. <code>.xyz</code>, <code>.club</code>, <code>.top</code>), checks for lookalike brand keywords (e.g., <code>paypal</code>, <code>microsoft</code>, <code>apple</code> on unverified domains), and calculates Shannon entropy of the second-level domain (SLD) to detect DGA signatures.</li>
+        <li>Sends a reputation request to the VirusTotal v3 URLs API to retrieve historical security vendor blacklist flags.</li>
+        <li>Sums the risk weights to calculate a risk score (0-100), returning standard verdicts.</li>
+    </ol>
+    <p><strong>Technologies Used:</strong> Python <code>socket</code>, <code>requests</code>, <code>urllib.parse</code>, <code>math</code> (Shannon entropy).</p>
+    <p><strong>Current Implementation Status:</strong> Fully functional, integrated into <code>/url-scanner</code> and the main dashboard routes.</p>
+
+    <h3>Email NLP Scanner</h3>
+    <p><strong>Purpose:</strong> Preprocess raw text and utilize a trained NLP classifier to calculate phishing probability.</p>
+    <p><strong>How it Works:</strong></p>
+    <ol>
+        <li>Preprocesses incoming email body: lowercases, strips URLs, removes numbers and symbols, tokenizes words, and filters out stopwords using NLTK corpora augmented by a custom list of 30+ business/conversational terms.</li>
+        <li>Transforms the clean tokens using a serialized <code>TfidfVectorizer</code>.</li>
+        <li>Feeds vectors into the serialized Logistic Regression classifier.</li>
+        <li>Extracts individual word weights to compute contribution scores for "Explainable AI" highlights on the UI.</li>
+    </ol>
+    <p><strong>Technologies Used:</strong> <code>scikit-learn</code> (LogisticRegression, TfidfVectorizer), <code>joblib</code>, <code>nltk</code> (tokenizers and corpora).</p>
+    <p><strong>Current Implementation Status:</strong> Fully functional, loaded dynamically on app startup.</p>
+
+    <h3>QR Scanner</h3>
+    <p><strong>Purpose:</strong> Parse QR codes containing hidden phishing links (Qishing).</p>
+    <p><strong>How it Works:</strong></p>
+    <ol>
+        <li>Allows analysts to drag and drop or upload image files containing a QR code.</li>
+        <li>A local canvas decodes the image pixels on the frontend.</li>
+        <li>Passes image data to the <code>jsQR</code> library, which extracts the text payload.</li>
+        <li>Feeds the decoded text to the <code>/scan</code> API endpoint in <code>app.py</code> to trigger the URL OSINT pipeline.</li>
+    </ol>
+    <p><strong>Technologies Used:</strong> Client-side JavaScript, <code>jsQR</code> (v1.4.0) CDN library.</p>
+    <p><strong>Current Implementation Status:</strong> Fully functional, integrated into <code>/qr-scanner</code>.</p>
+
+    <h3>Screenshot Detector</h3>
+    <p><strong>Purpose:</strong> Identify visual phishing templates, support scams, or fake system alert scareware screens.</p>
+    <p><strong>How it Works:</strong></p>
+    <ol>
+        <li>Ingests uploaded image bytes via a POST route in <code>app.py</code>.</li>
+        <li>Converts the byte array into a NumPy matrix and decodes it using OpenCV.</li>
+        <li>Runs OpenCV contour approximation to locate horizontal input boxes, indicating credential-harvesting forms.</li>
+        <li>Feeds the image into <code>RapidOCR</code> to extract text.</li>
+        <li>Calculates threat scores by cross-referencing extracted text against keyword bags (e.g. Credential Harvesting, Crypto Doubler Schemes, and Scareware alerts).</li>
+        <li>Combines contour logs with text findings to output categories and verdicts.</li>
+    </ol>
+    <p><strong>Technologies Used:</strong> <code>opencv-python</code> (<code>cv2</code>), <code>numpy</code>, <code>rapidocr_onnxruntime</code> (ONNX execution).</p>
+    <p><strong>Current Implementation Status:</strong> Fully functional, integrated into <code>/screenshot-detector</code>.</p>
+
+    <hr/>
+
+    <h2>5. Machine Learning Components</h2>
+
+    <h3>Models Used</h3>
+    <ul>
+        <li><strong>Logistic Regression:</strong> Selected as the primary classifier for text classification due to its speed, interpretability, and ability to output probability ranges via <code>predict_proba</code>.</li>
+        <li><strong>TF-IDF Vectorizer:</strong> Set to capture unigrams and bigrams, limited to the top 3,000 features, filtering out infrequent terms.</li>
+    </ul>
+
+    <h3>Datasets Used</h3>
+    <p><strong>Phishing Email Corpus:</strong> Labeled corpus of <strong>3,000+ emails</strong> (<code>spam_or_not_spam.csv</code>), featuring clean balances of spam, phishing alerts, and normal business communication.</p>
+
+    <h3>Features Extracted</h3>
+    <ul>
+        <li><strong>Text Features:</strong> TF-IDF weights mapped across the 3,000 feature vocabulary.</li>
+        <li><strong>Structural Metadata Features:</strong> Total string length, word count, special character counts, has-url indicator flags, and suspicious word density ratios.</li>
+    </ul>
+
+    <h3>Training Pipeline</h3>
+    <p>The ML pipeline is automated via <code>backend/ml_pipeline/train.py</code>. On execution, it downloads the clean corpus, preprocesses the text, splits the dataset (80/20 train/test), fits the TF-IDF Vectorizer, trains a balanced-weight Logistic Regression model, and saves the serialized <code>.pkl</code> files to <code>backend/model/</code>.</p>
+
+    <hr/>
+
+    <h2>6. APIs and Integrations</h2>
+    <ul>
+        <li><strong>VirusTotal v3 API:</strong> Domain reputation validation queries.</li>
+        <li><strong>RDAP API (<code>rdap.org</code>):</strong> Lightweight domain registration metadata.</li>
+        <li><strong>IP-API Geolocation service:</strong> Maps resolved IP addresses to host ISP, city, and country.</li>
+        <li><strong>RapidOCR:</strong> CPU-optimized local OCR execution.</li>
+        <li><strong>jsQR Library:</strong> Client-side visual QR canvas decoding.</li>
+    </ul>
+
+    <hr/>
+
+    <h2>7. User Interface History</h2>
+
+    <h3>Original UI</h3>
+    <p>The original UI was a set of simple, monolithic HTML forms. It relied on basic custom CSS (<code>dashboard.css</code>, <code>auth.css</code>), lacked responsiveness, and had zero visual indicators, charts, or detailed report views. Git merge conflicts broke the header/footer inheritance, leaving pages in an unrunnable state.</p>
+
+    <h3>Current UI</h3>
+    <p>Replaced with a modern SOC design system.</p>
+    <ul>
+        <li><strong>Design Language:</strong> Radial gradients, glassmorphism cards (<code>glass-card</code>), neon cyan/indigo active borders (<code>glow-hover</code>), and monospaced text indicators.</li>
+        <li><strong>Base Layout:</strong> <code>_layout.html</code> centralizes Tailwind CSS CDN imports, fonts (Outfit, Inter, JetBrains Mono), and FontAwesome icons.</li>
+        <li><strong>Analyst Dashboard:</strong> Displays total scans, safe logs, and active threats in styled indicator cards. Integrates Chart.js to render real-time doughnut metrics.</li>
+    </ul>
+
+    <hr/>
+
+    <h2>8. Testing History</h2>
+    <p>The project includes an integration and unit test suite powered by <code>pytest</code>.</p>
+    <h3>Test Cases</h3>
+    <ul>
+        <li><code>test_preprocessing.py</code>: Unit tests verifying NLTK text transformations.</li>
+        <li><code>test_features.py</code>: Unit tests verifying metadata features.</li>
+        <li><code>test_integration.py</code>: Integration tests running endpoint checks (register, login, URL scan, Email scan, history log query, report creation, admin console, QR code POST APIs, and multipart OCR image uploads).</li>
+    </ul>
+    <p>All integration and unit tests pass successfully.</p>
+
+    <hr/>
+
+    <h2>9. Current Project Status</h2>
+
+    <h3>Fully Functional Features</h3>
+    <ul>
+        <li>✓ Dual-Engine Terminal Scanner (automatically routes URL vs Email texts).</li>
+        <li>✓ Deep URL OSINT Scanner (GeoIP, RDAP registrar checks, entropy, VT reputation).</li>
+        <li>✓ Email NLP Phishing Classifier (Trained Logistic Regression pipeline).</li>
+        <li>✓ QR Code Decoder (Client-side jsQR visual canvas extractor).</li>
+        <li>✓ Screenshot Scam Auditor (OpenCV contour fields count and local ONNX RapidOCR).</li>
+        <li>✓ SOC Threat Intelligence Feed (Local alerts logs combined with global OSINT streams).</li>
+        <li>✓ Relational database history tracking and administrative global audit panels.</li>
+        <li>✓ Role-based user controls (<code>@admin_required</code> and <code>@login_required</code>).</li>
+        <li>✓ Exportable Threat Reports, Password Strength Analyzer, Security Awareness Quiz.</li>
+    </ul>
+
+    <h3>Partially Functional / Under Development</h3>
+    <ul>
+        <li><strong>Email-based OTP Verification:</strong> Ingests code inputs via <code>verify_otp.html</code> and console logger, but backend <code>/verify-otp</code> route redirects to <code>/</code> without checking the code.</li>
+        <li><strong>Password Recovery Token Flow:</strong> Reset function simulates recovery by exposing a temporary UUID password on the screen rather than sending email token links.</li>
+    </ul>
+
+    <hr/>
+
+    <h2>10. Known Issues</h2>
+    <ul>
+        <li><strong>Recovery Token Simulator:</strong> The forgot password flow generates a temporary UUID password and exposes it directly via Flash message, which is unsafe for production.</li>
+        <li><strong>Single-Threaded Socket block:</strong> Synchronous third-party API queries running on Flask's default single-threaded developer server can block incoming connections during heavy concurrent scanning.</li>
+        <li><strong>Rate Limits:</strong> The VirusTotal engine is bound to a free API key tier and falls back to a structural scoring mock if rates are exceeded.</li>
+    </ul>
+
+    <hr/>
+
+    <h2>11. Project Timeline</h2>
+    <ul>
+        <li><strong>Phase 1: Project Initiation &amp; Skeleton Setup</strong> (March 2026): Initial directory setup, simple Flask routing, and baseline dummy models.</li>
+        <li><strong>Phase 2: Restructuring</strong> (April 2026): Conflict resolution in views, dataset scaling to 3,000+ entries, retrained models, and SQLAlchemy migration.</li>
+        <li><strong>Phase 3: Multi-Vector Scanners</strong> (May 2026): Integrated Geolocation, RDAP WHOIS, VirusTotal v3 integrations, client-side QR decoders, and screenshot RapidOCR scanner.</li>
+        <li><strong>Phase 4: Hardening &amp; Expansion</strong> (June 2026): Enforced CSRF tokens, rate-limiting, and admin audit panels. Developed the automated unit and integration PyTest suites.</li>
+    </ul>
+
+    <hr/>
+
+    <h2>12. Technical Summary</h2>
+    <h3>Start and Onboarding</h3>
+    <ol>
+        <li><strong>Environment Setup:</strong> <code>pip install -r backend/requirements.txt</code>.</li>
+        <li><strong>Dataset Ingestion:</strong> Run <code>python backend/ml_pipeline/train.py</code> to retrieve the phishing corpus and serialize the TF-IDF Vectorizer and model files inside <code>backend/model/</code>.</li>
+        <li><strong>Boot Application:</strong> Run <code>python backend/app.py</code>.</li>
+        <li><strong>Admin Portal Access:</strong> Log in using the seeded administrator credentials (<code>username: admin</code>, <code>password: CyberBuddy@2026</code>).</li>
+        <li><strong>Execute Tests:</strong> Execute the test suite using <code>pytest backend/</code>.</li>
+    </ol>
+</body>
+</html>

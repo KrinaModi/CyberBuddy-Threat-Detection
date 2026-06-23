@@ -24,7 +24,7 @@
 
                 <!-- DRAG & DROP ZONE -->
                 <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/30 rounded-2xl p-8 transition-colors cursor-pointer relative" id="drop-zone">
-                    <input type="file" id="qr-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <input type="file" id="qr-file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onclick="this.value = null;">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-slate-500 mb-4" id="upload-icon"></i>
                     <h3 class="text-sm font-semibold text-slate-300" id="file-label">Drag & drop QR image or click to browse</h3>
                     <p class="text-xs text-slate-600 mt-1">Supports PNG, JPG, JPEG formats</p>

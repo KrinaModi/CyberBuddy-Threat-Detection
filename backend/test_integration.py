@@ -13,6 +13,14 @@ def client():
     flask_app.config['WTF_CSRF_ENABLED'] = False
     flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     
+    with flask_app.app_context():
+        # Clear Flask-SQLAlchemy engine cache to force using the new in-memory URI
+        if 'sqlalchemy' in flask_app.extensions:
+            try:
+                flask_app.extensions['sqlalchemy']._engines.clear()
+            except Exception:
+                pass
+                
     with flask_app.test_client() as client:
         with flask_app.app_context():
             db.create_all()
@@ -102,3 +110,29 @@ def test_full_flow(client):
     response = client.get('/admin/history')
     assert response.status_code == 200
     assert b"Global Audit Logs" in response.data
+
+    # 12. QR Code API Scan (capitalized URL protocol check)
+    response = client.post('/scan', json={
+        'input': 'HTTPS://PAYPAL-SECURE-LOGIN.NET'
+    })
+    assert response.status_code == 200
+    qr_data = response.get_json()
+    assert qr_data['scan_type'] == 'URL'
+    assert qr_data['risk'] > 25
+
+    # 13. Screenshot Detector Scan (Visual OCR & CV logic check)
+    import io
+    from PIL import Image as PILImage
+    img = PILImage.new('RGB', (100, 100), color='red')
+    img_byte_arr = io.BytesIO()
+    img.save(img_byte_arr, format='PNG')
+    img_byte_arr.seek(0)
+    
+    response = client.post('/screenshot-detector', data={
+        'screenshot': (img_byte_arr, 'test_screenshot.png')
+    }, content_type='multipart/form-data')
+    assert response.status_code == 200
+    ss_data = response.get_json()
+    assert ss_data['status'] == 'SUCCESS'
+    assert ss_data['scam_verdict'] in ['SAFE', 'LOW RISK', 'SUSPICIOUS', 'HIGH RISK', 'MALICIOUS']
+    assert 'ai_critique' in ss_data

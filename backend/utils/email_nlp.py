@@ -9,6 +9,7 @@ if BACKEND_DIR not in sys.path:
     sys.path.append(BACKEND_DIR)
 
 from utils.preprocessing import clean_text
+from utils.scoring import get_threat_classification
 
 class EmailNLPScanner:
     def __init__(self):
@@ -50,12 +51,7 @@ class EmailNLPScanner:
             
         risk_score = int(prob * 100)
         
-        if risk_score >= 70:
-            classification = "Malicious"
-        elif risk_score >= 40:
-            classification = "Suspicious"
-        else:
-            classification = "Safe"
+        classification = get_threat_classification(risk_score)
             
         # Explainable AI: calculate contributions of each word
         feature_names = self.vectorizer.get_feature_names_out()

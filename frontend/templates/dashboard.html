@@ -115,7 +115,7 @@
                             <div class="relative h-20 w-20 flex items-center justify-center">
                                 <!-- Outer circle -->
                                 <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-                                <div class="absolute inset-0 rounded-full border-4 {% if classification == 'Malicious' %} border-rose-500 text-glow-red {% elif classification == 'Suspicious' %} border-amber-500 {% else %} border-emerald-500 {% endif %} opacity-80" style="clip-path: polygon(0 0, 100% 0, 100% {{ score }}%, 0 {{ score }}%);"></div>
+                                <div class="absolute inset-0 rounded-full border-4 {% if classification in ['Malicious', 'High Risk'] %} border-rose-500 text-glow-red {% elif classification in ['Suspicious', 'Low Risk'] %} border-amber-500 {% else %} border-emerald-500 {% endif %} opacity-80" style="clip-path: polygon(0 0, 100% 0, 100% {{ score }}%, 0 {{ score }}%);"></div>
                                 <span class="text-xl font-bold text-slate-100">{{ score }}%</span>
                             </div>
                             <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1.5">THREAT RISK</span>
@@ -123,8 +123,8 @@
                         
                         <!-- Verdict Box -->
                         <div class="p-4 rounded-xl border flex flex-col justify-center items-center text-center w-32
-                            {% if classification == 'Malicious' %} bg-rose-500/10 border-rose-500/30 text-rose-400
-                            {% elif classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/30 text-amber-400
+                            {% if classification in ['Malicious', 'High Risk'] %} bg-rose-500/10 border-rose-500/30 text-rose-400
+                            {% elif classification in ['Suspicious', 'Low Risk'] %} bg-amber-500/10 border-amber-500/30 text-amber-400
                             {% else %} bg-emerald-500/10 border-emerald-500/30 text-emerald-400
                             {% endif %}">
                             <span class="text-[9px] uppercase tracking-widest font-bold opacity-60">Classification</span>
@@ -277,8 +277,8 @@
                                 </div>
                             </div>
                             <span class="px-2 py-0.5 rounded font-mono font-bold tracking-wider uppercase border text-[10px] shrink-0
-                                {% if scan.classification == 'Malicious' %} bg-rose-500/10 border-rose-500/20 text-rose-400
-                                {% elif scan.classification == 'Suspicious' %} bg-amber-500/10 border-amber-500/20 text-amber-400
+                                {% if scan.classification in ['Malicious', 'High Risk'] %} bg-rose-500/10 border-rose-500/20 text-rose-400
+                                {% elif scan.classification in ['Suspicious', 'Low Risk'] %} bg-amber-500/10 border-amber-500/20 text-amber-400
                                 {% else %} bg-emerald-500/10 border-emerald-500/20 text-emerald-400
                                 {% endif %}">
                                 {{ scan.classification }}

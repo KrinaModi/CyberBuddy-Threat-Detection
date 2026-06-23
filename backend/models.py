@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
@@ -12,7 +12,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default='user') # 'admin' or 'user'
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime, nullable=True)
     
     scans = db.relationship('ScanHistory', backref='user', lazy=True)
@@ -36,5 +36,6 @@ class ScanHistory(db.Model):
     classification = db.Column(db.String(20), nullable=False)  # Safe, Suspicious, Malicious
     threat_explanation = db.Column(db.JSON, nullable=True) # JSON list of reasons/explanations
     domain_info = db.Column(db.JSON, nullable=True)        # IP, Country, Registrar details
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
 

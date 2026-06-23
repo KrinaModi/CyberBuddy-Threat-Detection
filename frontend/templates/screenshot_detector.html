@@ -184,7 +184,10 @@
             data.reasons.forEach(warning => {
                 const item = document.createElement('div');
                 item.className = "flex gap-2 items-start";
-                item.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500 mt-0.5"></i> <span>${warning}</span>`;
+                let icon = '<i class="fa-solid fa-circle-info text-cyan-400 mt-0.5"></i>';
+                if (warning.includes('✓')) icon = '<i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>';
+                if (warning.includes('✗')) icon = '<i class="fa-solid fa-circle-xmark text-rose-500 mt-0.5"></i>';
+                item.innerHTML = `${icon} <span>${warning.replace(/[✓✗ℹ️]/g, '').trim()}</span>`;
                 reportWarnings.appendChild(item);
             });
 

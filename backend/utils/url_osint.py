@@ -1,15 +1,20 @@
 import socket
 import requests
+import math
+from collections import Counter
+from datetime import datetime
 from urllib.parse import urlparse
+from utils.scoring import get_threat_classification
 
+import os
 # Use the same VT API key from url_scanner.py (or fallback)
-API_KEY = "8f600656464cc1b095265dc2f56de64805f013e40a2c254e7f99ee02d56ec1af"
+API_KEY = os.environ.get("VIRUSTOTAL_API_KEY", "8f600656464cc1b095265dc2f56de64805f013e40a2c254e7f99ee02d56ec1af")
 
 def extract_domain(url):
     """
     Safely extract domain name from a URL or raw string.
     """
-    if not url.startswith(('http://', 'https://')):
+    if not url.lower().startswith(('http://', 'https://')):
         url = 'http://' + url
     try:
         parsed = urlparse(url)
@@ -53,24 +58,87 @@ def get_ip_geolocation(ip):
     
     return {"country": "Unknown", "isp": "Unknown"}
 
-def get_registrar_rdap(domain):
+def calculate_entropy(text):
+    """
+    Calculates the Shannon entropy of a string to detect randomized strings (DGA).
+    """
+    if not text:
+        return 0.0
+    counts = Counter(text)
+    total = len(text)
+    entropy = -sum((count / total) * math.log2(count / total) for count in counts.values())
+    return entropy
+
+def is_url_shortener(domain):
+    """
+    Checks if a domain is a known URL shortener service.
+    """
+    shortener_domains = {
+        "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", 
+        "buff.ly", "adf.ly", "bit.do", "mcaf.ee", "su.pr", "rebrand.ly", 
+        "tiny.cc", "shorturl.at", "shorte.st", "cutt.ly", "rb.gy"
+    }
+    return domain in shortener_domains
+
+def get_registrar_and_registration_rdap(domain):
     """
     Queries public RDAP to find registrar and registration details.
     """
+    registrar = "Unknown Registrar"
+    created_date = None
     try:
         res = requests.get(f"https://rdap.org/domain/{domain}", timeout=3)
         if res.status_code == 200:
             data = res.json()
-            # Find registrar name in entities list
+            # Find registrar name
             for entity in data.get("entities", []):
                 if "registrar" in entity.get("roles", []):
-                    # Usually registrar name is in vcard
                     for vcard in entity.get("vcardArray", [None, []])[1]:
                         if vcard[0] == "fn":
-                            return vcard[3]
+                            registrar = vcard[3]
+                            break
+            # Find registration date
+            for event in data.get("events", []):
+                if event.get("eventAction") == "registration":
+                    created_date = event.get("eventDate")
+                    break
     except Exception:
         pass
-    return "Unknown Registrar"
+    return registrar, created_date
+
+def calculate_domain_age_days(created_date_str):
+    """
+    Parses creation date string and calculates domain age in days.
+    """
+    if not created_date_str:
+        return None
+    try:
+        from datetime import timezone
+        # standard ISO format date extraction (e.g. 2023-01-24T18:20:00Z)
+        # extract the first 10 characters (YYYY-MM-DD)
+        date_part = created_date_str[:10]
+        created_dt = datetime.strptime(date_part, "%Y-%m-%d")
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        age_days = (now - created_dt).days
+        return age_days
+    except Exception:
+        return None
+
+def extract_sld(domain):
+    """
+    Extracts the second-level domain (SLD) from a domain name.
+    """
+    parts = domain.split('.')
+    if len(parts) >= 2:
+        if parts[-2] in ('co', 'com', 'org', 'net', 'gov', 'edu', 'mil') and len(parts) >= 3:
+            return parts[-3]
+        return parts[-2]
+    return domain
+
+def get_registrar_rdap(domain):
+    # Retain for backward compatibility just in case, calling the new combined helper
+    registrar, _ = get_registrar_and_registration_rdap(domain)
+    return registrar
 
 def query_virustotal(url):
     """
@@ -124,14 +192,14 @@ def scan_url_osint(url):
     domain = extract_domain(url).lower()
     ip = get_dns_records(domain)
     geo = get_ip_geolocation(ip)
-    registrar = get_registrar_rdap(domain)
+    registrar, created_date = get_registrar_and_registration_rdap(domain)
     vt_result = query_virustotal(url)
     
     # Granular Multi-Factored URL Risk Scoring Engine
     base_risk = 0
     
     # 1. SSL/HTTPS check
-    has_https = url.startswith("https")
+    has_https = url.lower().startswith("https")
     if not has_https:
         base_risk += 15
         
@@ -172,7 +240,45 @@ def scan_url_osint(url):
     if has_suspicious_kw:
         base_risk += 25
         
-    # 6. Reputation / VirusTotal Hits
+    # 6. Advanced Indicators: Direct IP Address
+    is_ip = False
+    try:
+        socket.inet_aton(domain)
+        is_ip = True
+    except socket.error:
+        try:
+            socket.inet_pton(socket.AF_INET6, domain)
+            is_ip = True
+        except Exception:
+            pass
+            
+    if is_ip:
+        base_risk += 30
+
+    # 7. Advanced Indicators: Shannon Entropy
+    sld = extract_sld(domain)
+    sld_entropy = calculate_entropy(sld)
+    has_high_entropy = False
+    if len(sld) >= 8 and sld_entropy > 4.2:
+        base_risk += 15
+        has_high_entropy = True
+
+    # 8. Advanced Indicators: URL Shortener Check
+    is_shortener = is_url_shortener(domain)
+    if is_shortener:
+        base_risk += 20
+
+    # 9. Advanced Indicators: Domain Registration Age Check
+    age_days = calculate_domain_age_days(created_date)
+    is_new_domain = False
+    if age_days is not None:
+        if age_days < 30:
+            base_risk += 35
+            is_new_domain = True
+        elif age_days < 180:
+            base_risk += 15
+
+    # 10. Reputation / VirusTotal Hits
     vt_malicious = vt_result.get("malicious_hits", 0)
     vt_suspicious = vt_result.get("suspicious_hits", 0)
     
@@ -182,21 +288,23 @@ def scan_url_osint(url):
     total_score = base_risk + reputation_score
     risk_score = min(100, max(0, total_score))
     
-    # Handle classification
-    if risk_score >= 70 or vt_malicious >= 3:
+    # Use standardized scoring classification
+    classification = get_threat_classification(risk_score)
+    if vt_malicious >= 3 and risk_score < 90:
+        # Override to Malicious if VirusTotal is certain
         classification = "Malicious"
-    elif risk_score >= 35 or vt_malicious > 0 or vt_suspicious > 0:
-        classification = "Suspicious"
-    else:
-        classification = "Safe"
+        risk_score = max(90, risk_score)
         
     features = {
-        "is_ip_address": 1 if ip == domain else 0,
+        "is_ip_address": 1 if is_ip else 0,
         "has_https": 1 if has_https else 0,
         "has_dns_resolution": 1 if ip else 0,
         "has_bad_tld": 1 if has_bad_tld else 0,
         "has_suspicious_kw": 1 if has_suspicious_kw else 0,
-        "long_url": 1 if len(url) > 50 else 0
+        "long_url": 1 if len(url) > 50 else 0,
+        "is_url_shortener": 1 if is_shortener else 0,
+        "high_entropy_sld": 1 if has_high_entropy else 0,
+        "newly_registered_domain": 1 if is_new_domain else 0
     }
     
     domain_info = {
