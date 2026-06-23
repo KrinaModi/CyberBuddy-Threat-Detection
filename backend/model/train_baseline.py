@@ -12,13 +12,16 @@ from utils.preprocessing import clean_text
 from utils.features import extract_features
 
 # 1. Load dataset (EMAIL dataset for now)
-data = pd.read_csv('datasets/email_dataset.csv')
+base_dir = os.path.dirname(os.path.abspath(__file__))
+dataset_path = os.path.abspath(os.path.join(base_dir, '..', '..', 'datasets', 'email_dataset.csv'))
+data = pd.read_csv(dataset_path)
+data = data.dropna(subset=['email'])
 
 # 2. Preprocess text
-data['cleaned_text'] = data['text_or_url'].apply(clean_text)
+data['cleaned_text'] = data['email'].apply(clean_text)
 
 # 3. Extract features
-feature_data = data['cleaned_text'].apply(extract_features)
+feature_data = data['cleaned_text'].apply(lambda x: extract_features(x))
 feature_df = pd.DataFrame(list(feature_data))
 
 # 4. Labels

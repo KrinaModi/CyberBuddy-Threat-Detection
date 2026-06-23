@@ -45,9 +45,21 @@ def generate_threat_explanation(scan_type, risk_score, features, nlp_analysis=No
         if features.get("long_url"):
             reasons.append("✗ High URL length complexity: The indicator string contains excessive parameters or subdomains.")
 
+        # 9. URL Shortener
+        if features.get("is_url_shortener"):
+            reasons.append("✗ Link masking detected: Uses a popular URL shortener service to hide final destination.")
+
+        # 10. High entropy
+        if features.get("high_entropy_sld"):
+            reasons.append("✗ Domain randomness: High character randomness detected in domain name (indicative of auto-generated domains).")
+
+        # 11. Newly registered domain
+        if features.get("newly_registered_domain"):
+            reasons.append("✗ Newly registered domain: Created within the last 30 days (very common for disposable phishing sites).")
+
     elif scan_type == "EMAIL":
         # 1. NLP ML Engine Results
-        if nlp_analysis and nlp_analysis.get("top_features"):
+        if risk_score >= 25 and nlp_analysis and nlp_analysis.get("top_features"):
             top_words = [item["word"] for item in nlp_analysis["top_features"] if item["contribution"] > 0.05]
             if top_words:
                 reasons.append(

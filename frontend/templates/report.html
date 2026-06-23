@@ -56,8 +56,8 @@
             <div class="text-right space-y-1 font-mono text-xs">
                 <div><strong>CLASSIFICATION:</strong> 
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border
-                        {% if scan.classification == 'Malicious' %} bg-red-50 text-red-700 border-red-200
-                        {% elif scan.classification == 'Suspicious' %} bg-amber-50 text-amber-700 border-amber-200
+                        {% if scan.classification in ['Malicious', 'High Risk'] %} bg-red-50 text-red-700 border-red-200
+                        {% elif scan.classification in ['Suspicious', 'Low Risk'] %} bg-amber-50 text-amber-700 border-amber-200
                         {% else %} bg-emerald-50 text-emerald-700 border-emerald-200
                         {% endif %}">
                         {{ scan.classification }}
