@@ -1,0 +1,18 @@
+* [33m38bf895[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Save current CyberBuddy changes
+* [33mcff7b42[m[33m ([m[1;31morigin/main[m[33m)[m Added dashboard UI, profile page, settings page and URL scanner
+* [33me74e0e9[m Initial commit - CyberBuddy phishing detection
+* [33maef3f76[m Updated gitignore
+* [33m8c5e2ad[m Removed datasets and added to gitignore
+* [33mdc38e6a[m Updated login feature and UI
+* [33m4e032c8[m Improved login UI
+* [33m82c2bc6[m Final working login flow, UI update, and trained model added
+* [33m39355f5[m Initial project setup with ML-based threat detection
+* [33m2d05b84[m Added enhanced training logic for phishing detection
+[31m|[m * [33m714be5b[m[33m ([m[1;32mfeature-login-ui[m[33m)[m Updated gitignore
+[31m|[m * [33m37a9d59[m Removed datasets and added to gitignore
+[31m|[m * [33m56429e5[m Updated login feature and UI
+[31m|[m * [33m4f141e1[m Improved login UI
+[31m|[m * [33m34e0c7f[m Final working login flow, UI update, and trained model added
+[31m|[m * [33m6c6b76e[m Initial project setup with ML-based threat detection
+[31m|[m[31m/[m  
+* [33m4370fc2[m Initial commit
