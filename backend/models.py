@@ -36,6 +36,7 @@ class ScanHistory(db.Model):
     classification = db.Column(db.String(20), nullable=False)  # Safe, Suspicious, Malicious
     threat_explanation = db.Column(db.JSON, nullable=True) # JSON list of reasons/explanations
     domain_info = db.Column(db.JSON, nullable=True)        # IP, Country, Registrar details
+    analyst_report = db.Column(db.JSON, nullable=True)     # Full AI analyst report JSON
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 

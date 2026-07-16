@@ -17,7 +17,7 @@ from utils.email_nlp import EmailNLPScanner
 from utils.url_osint import scan_url_osint
 from utils.screenshot_ocr import scan_screenshot
 from utils.explanation import generate_threat_explanation
-from utils.ai_assistant import generate_ai_analysis
+from utils.analyst.analyst_report_builder import build_analyst_report
 from datetime import datetime
 
 
@@ -417,14 +417,35 @@ def dashboard():
         recent_scans=recent_scans
     )
 
-def evaluate_threat(text):
-    # Determine if input is a URL
+def evaluate_threat(text, scan_type=None):
     cleaned_input = text.strip()
-    is_url = cleaned_input.lower().startswith(("http://", "https://", "www.")) or (
-        "." in cleaned_input.split("/")[0] and len(cleaned_input.split("/")[0]) > 3
-    )
     
-    if is_url:
+    # If not provided, strictly guess based on format
+    if not scan_type:
+        import re
+        # Strict URL regex: Starts with http/https/www OR is a clean domain (no spaces, contains dot, no @)
+        url_pattern = re.compile(
+            r'^(?:http|https)://[^\s]+$|^www\.[^\s]+$|^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:/[^\s]*)?$', 
+            re.IGNORECASE
+        )
+        if " " not in cleaned_input and url_pattern.match(cleaned_input) and "@" not in cleaned_input:
+            scan_type = "URL"
+        elif " " in cleaned_input or "\n" in cleaned_input:
+            scan_type = "EMAIL"
+        else:
+            scan_type = "UNKNOWN"
+
+    if scan_type == "UNKNOWN":
+        return {
+            "scan_type": "UNKNOWN INPUT",
+            "risk_score": 0,
+            "classification": "Safe",
+            "threat_explanation": ["Unknown input format. Please specify URL or EMAIL, or use the dedicated scanner."],
+            "domain_info": None,
+            "analyst_report": None
+        }
+        
+    if scan_type == "URL":
         osint = scan_url_osint(cleaned_input)
         features = osint["features"]
         domain_info = osint["domain_info"]
@@ -434,12 +455,20 @@ def evaluate_threat(text):
             features=features,
             osint_data=osint["domain_info"] | osint["vt_data"]
         )
+        analyst_report = build_analyst_report(
+            scan_type="URL",
+            features=features,
+            risk_score=osint["risk_score"],
+            classification=osint["classification"],
+            osint_data=osint["domain_info"] | osint["vt_data"]
+        )
         return {
             "scan_type": "URL",
             "risk_score": osint["risk_score"],
             "classification": osint["classification"],
             "threat_explanation": explanation,
-            "domain_info": domain_info
+            "domain_info": domain_info,
+            "analyst_report": analyst_report
         }
     else:
         # Email NLP Engine
@@ -451,20 +480,29 @@ def evaluate_threat(text):
             features=features,
             nlp_analysis=nlp
         )
+        analyst_report = build_analyst_report(
+            scan_type="EMAIL",
+            features=features,
+            risk_score=nlp["risk_score"],
+            classification=nlp["classification"],
+            nlp_analysis=nlp
+        )
         return {
             "scan_type": "EMAIL",
             "risk_score": nlp["risk_score"],
             "classification": nlp["classification"],
             "threat_explanation": explanation,
             "domain_info": None,
-            "nlp_analysis": nlp
+            "nlp_analysis": nlp,
+            "analyst_report": analyst_report
         }
 
 @app.route("/analyze", methods=["POST"])
 @login_required
 def analyze():
     user_input = request.form["input_data"].strip()
-    analysis = evaluate_threat(user_input)
+    scan_type = request.form.get("scan_type")
+    analysis = evaluate_threat(user_input, scan_type=scan_type)
     
     scan = ScanHistory(
         user_id=session['user_id'],
@@ -473,19 +511,13 @@ def analyze():
         risk_score=analysis["risk_score"],
         classification=analysis["classification"],
         threat_explanation=analysis["threat_explanation"],
-        domain_info=analysis["domain_info"]
+        domain_info=analysis["domain_info"],
+        analyst_report=analysis.get("analyst_report")
     )
     db.session.add(scan)
     db.session.commit()
     
-    # Generate human-readable AI analysis commentary
-    ai_commentary = generate_ai_analysis(
-        analysis["scan_type"],
-        user_input,
-        analysis["risk_score"],
-        analysis["classification"],
-        analysis["threat_explanation"]
-    )
+    # Removed ai_commentary in favor of analyst_report
     
     # Query stats for dashboard render
     scans_q = ScanHistory.query.filter_by(user_id=session['user_id'])
@@ -507,7 +539,6 @@ def analyze():
             classification=analysis["classification"],
             explanation=analysis["threat_explanation"],
             domain_info=analysis["domain_info"],
-            ai_commentary=ai_commentary,
             timestamp=scan.timestamp
         )
     elif "/email-scanner" in ref:
@@ -521,7 +552,6 @@ def analyze():
             classification=analysis["classification"],
             explanation=analysis["threat_explanation"],
             nlp_analysis=analysis.get("nlp_analysis"),
-            ai_commentary=ai_commentary,
             timestamp=scan.timestamp
         )
     else:
@@ -536,7 +566,7 @@ def analyze():
             explanation=analysis["threat_explanation"],
             domain_info=analysis["domain_info"],
             nlp_analysis=analysis.get("nlp_analysis"),
-            ai_commentary=ai_commentary,
+            analyst_report=analysis.get("analyst_report"),
             timestamp=scan.timestamp,
             total_scans=total_scans,
             malicious_scans=malicious_scans,
@@ -552,8 +582,9 @@ def scan():
     try:
         data = request.get_json(silent=True) or {}
         text = data.get("input", "").strip()
+        scan_type = data.get("scan_type")
 
-        analysis = evaluate_threat(text)
+        analysis = evaluate_threat(text, scan_type=scan_type)
         
         scan = ScanHistory(
             user_id=session['user_id'],
@@ -562,7 +593,8 @@ def scan():
             risk_score=analysis["risk_score"],
             classification=analysis["classification"],
             threat_explanation=analysis["threat_explanation"],
-            domain_info=analysis["domain_info"]
+            domain_info=analysis["domain_info"],
+            analyst_report=analysis.get("analyst_report")
         )
         db.session.add(scan)
         db.session.commit()
@@ -573,7 +605,8 @@ def scan():
             "result": api_result,
             "risk": analysis["risk_score"],
             "scan_type": analysis["scan_type"],
-            "explanation": analysis["threat_explanation"]
+            "explanation": analysis["threat_explanation"],
+            "analyst_report": analysis.get("analyst_report")
         })
     except Exception as e:
         return jsonify({
@@ -600,7 +633,10 @@ def intel():
 @app.route("/report/<int:scan_id>")
 @login_required
 def report(scan_id):
-    scan = ScanHistory.query.get_or_404(scan_id)
+    scan = db.session.get(ScanHistory, scan_id)
+    if not scan:
+        flash("Scan report not found.")
+        return redirect("/history")
     # Check permissions
     if not session.get('is_admin') and scan.user_id != session['user_id']:
         flash("Unauthorized access to report.")
@@ -677,6 +713,16 @@ def screenshot_detector():
             ai_critique = analysis["ai_critique"]
             reasons = analysis["reasons"]
             
+            # Build AI Analyst report for screenshot
+            analyst_report = build_analyst_report(
+                scan_type="SCREENSHOT",
+                features={},
+                risk_score=analysis["risk_score"],
+                classification=analysis["classification"],
+                screenshot_category=scam_category,
+                screenshot_explanations=reasons
+            )
+            
             # Log to DB as a screenshot scan record
             scan = ScanHistory(
                 user_id=session['user_id'],
@@ -685,7 +731,8 @@ def screenshot_detector():
                 risk_score=analysis["risk_score"],
                 classification=analysis["classification"],
                 threat_explanation=reasons,
-                domain_info={"scam_category": scam_category, "file_name": file.filename}
+                domain_info={"scam_category": scam_category, "file_name": file.filename},
+                analyst_report=analyst_report
             )
             db.session.add(scan)
             db.session.commit()
@@ -701,7 +748,8 @@ def screenshot_detector():
                 "scam_verdict": scam_verdict,
                 "scam_category": scam_category,
                 "ai_critique": ai_critique,
-                "reasons": reasons
+                "reasons": reasons,
+                "analyst_report": analyst_report
             })
         except Exception as e:
             return jsonify({"status": "ERROR", "message": str(e)})

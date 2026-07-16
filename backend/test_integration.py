@@ -90,6 +90,8 @@ def test_full_flow(client):
     # We should have two scans in DB. Let's query scan ID.
     with flask_app.app_context():
         scan = ScanHistory.query.first()
+        assert scan.analyst_report is not None
+        assert "attack_type" in scan.analyst_report
         scan_id = scan.id
     
     response = client.get(f'/report/{scan_id}')
@@ -119,6 +121,8 @@ def test_full_flow(client):
     qr_data = response.get_json()
     assert qr_data['scan_type'] == 'URL'
     assert qr_data['risk'] > 25
+    assert 'analyst_report' in qr_data
+    assert qr_data['analyst_report']['attack_type'] is not None
 
     # 13. Screenshot Detector Scan (Visual OCR & CV logic check)
     import io
@@ -136,3 +140,5 @@ def test_full_flow(client):
     assert ss_data['status'] == 'SUCCESS'
     assert ss_data['scam_verdict'] in ['SAFE', 'LOW RISK', 'SUSPICIOUS', 'HIGH RISK', 'MALICIOUS']
     assert 'ai_critique' in ss_data
+    assert 'analyst_report' in ss_data
+    assert ss_data['analyst_report']['attack_type'] is not None
