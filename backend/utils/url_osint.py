@@ -7,8 +7,8 @@ from urllib.parse import urlparse
 from utils.scoring import get_threat_classification
 
 import os
-# Use the same VT API key from url_scanner.py (or fallback)
-API_KEY = os.environ.get("VIRUSTOTAL_API_KEY", "8f600656464cc1b095265dc2f56de64805f013e40a2c254e7f99ee02d56ec1af")
+# Read VT API key from environment, default to None if not present
+API_KEY = os.environ.get("VIRUSTOTAL_API_KEY")
 
 def extract_domain(url):
     """
@@ -144,6 +144,13 @@ def query_virustotal(url):
     """
     Queries VirusTotal API for URL reputation.
     """
+    if not API_KEY:
+        return {
+            "malicious_hits": 0,
+            "suspicious_hits": 0,
+            "harmless_hits": 0
+        }
+
     headers = {"x-apikey": API_KEY}
     try:
         # Step 1: Submit URL/Get report
@@ -173,16 +180,11 @@ def query_virustotal(url):
     except Exception as e:
         print("VirusTotal query error:", e)
     
-    # Fallback mock hits if request fails or API key is limit exceeded
-    # Generate realistic mocks based on whether the URL domain looks suspicious
-    domain = extract_domain(url).lower()
-    suspicious_keywords = ["paypal", "bank", "login", "verify", "secure", "free", "win", "update", "signin"]
-    is_suspicious = any(kw in domain for kw in suspicious_keywords) or len(domain) > 30
-    
+    # Return empty hits if request fails
     return {
-        "malicious_hits": 12 if is_suspicious else 0,
-        "suspicious_hits": 2 if is_suspicious else 0,
-        "harmless_hits": 80 if is_suspicious else 90
+        "malicious_hits": 0,
+        "suspicious_hits": 0,
+        "harmless_hits": 0
     }
 
 def scan_url_osint(url):
@@ -201,11 +203,11 @@ def scan_url_osint(url):
     # 1. SSL/HTTPS check
     has_https = url.lower().startswith("https")
     if not has_https:
-        base_risk += 15
+        base_risk += 10
         
     # 2. DNS Resolution check
     if not ip:
-        base_risk += 25
+        base_risk += 10
         
     # 3. High-Risk TLD check
     high_risk_tlds = [".xyz", ".club", ".top", ".tk", ".loan", ".work", ".click", ".gq", ".cf", ".ml", ".ga", ".buzz", ".fit", ".date", ".info"]
@@ -215,16 +217,16 @@ def scan_url_osint(url):
         
     # 4. Domain length and structure
     if len(url) > 50:
-        base_risk += 10
+        base_risk += 5
     
     # Phishing domains often stack subdomains (dots)
     dot_count = domain.count('.')
     if dot_count >= 3:
-        base_risk += 15
+        base_risk += 10
         
     # Phishing domains often use hyphens (e.g. paypal-login)
     if '-' in domain:
-        base_risk += 8
+        base_risk += 5
         
     # 5. Suspicious Brand Keywords (lookalikes)
     suspicious_keywords = ["paypal", "bank", "login", "verify", "secure", "free", "win", "update", "signin", "netflix", "microsoft", "apple", "support", "credential"]
@@ -238,7 +240,7 @@ def scan_url_osint(url):
                 has_suspicious_kw = True
                 break
     if has_suspicious_kw:
-        base_risk += 25
+        base_risk += 20
         
     # 6. Advanced Indicators: Direct IP Address
     is_ip = False
@@ -253,36 +255,36 @@ def scan_url_osint(url):
             pass
             
     if is_ip:
-        base_risk += 30
+        base_risk += 20
 
     # 7. Advanced Indicators: Shannon Entropy
     sld = extract_sld(domain)
     sld_entropy = calculate_entropy(sld)
     has_high_entropy = False
     if len(sld) >= 8 and sld_entropy > 4.2:
-        base_risk += 15
+        base_risk += 10
         has_high_entropy = True
 
     # 8. Advanced Indicators: URL Shortener Check
     is_shortener = is_url_shortener(domain)
     if is_shortener:
-        base_risk += 20
+        base_risk += 15
 
     # 9. Advanced Indicators: Domain Registration Age Check
     age_days = calculate_domain_age_days(created_date)
     is_new_domain = False
     if age_days is not None:
         if age_days < 30:
-            base_risk += 35
+            base_risk += 20
             is_new_domain = True
         elif age_days < 180:
-            base_risk += 15
+            base_risk += 10
 
     # 10. Reputation / VirusTotal Hits
     vt_malicious = vt_result.get("malicious_hits", 0)
     vt_suspicious = vt_result.get("suspicious_hits", 0)
     
-    reputation_score = vt_malicious * 15 + vt_suspicious * 5
+    reputation_score = vt_malicious * 20 + vt_suspicious * 5
     
     # Combine base structural risk and reputation
     total_score = base_risk + reputation_score

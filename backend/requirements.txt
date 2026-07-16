@@ -10,3 +10,8 @@ Flask-WTF
 python-dotenv
 imblearn
 flask-limiter
+rapidocr-onnxruntime
+opencv-python
+Pillow
+requests
+Werkzeug
