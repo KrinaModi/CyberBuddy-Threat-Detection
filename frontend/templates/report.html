@@ -2,154 +2,424 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CyberBuddy SOC - Threat Investigation Report #{{ scan.id }}</title>
+    <title>Threat Investigation Report - {{ scan.id }}</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Outfit Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Gray 100 for screen, white for print */
+            color: #111827; /* Gray 900 */
         }
+        
+        .page {
+            max-width: 8.5in;
+            margin: 2rem auto;
+            background: white;
+            padding: 1in;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
         @media print {
+            body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0.5in !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
             .no-print {
                 display: none !important;
             }
-            body {
-                background: white !important;
-                color: black !important;
+            .page-break {
+                page-break-before: always;
             }
-            .print-border {
-                border-color: #e2e8f0 !important;
+            .avoid-break {
+                page-break-inside: avoid;
             }
+        }
+        
+        /* Typography Scale */
+        h1, h2, h3, h4 { font-family: 'Inter', sans-serif; }
+        .section-title {
+            font-size: 1.125rem; /* 18px */
+            font-weight: 700;
+            color: #1f2937;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+        }
+        .data-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.025em;
+        }
+        .data-value {
+            font-size: 0.875rem;
+            color: #111827;
+            font-weight: 500;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Table Styles */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        .report-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 p-8 min-h-screen">
-    
-    <div class="max-w-4xl mx-auto bg-white p-10 rounded-3xl border border-slate-200 shadow-sm print-border">
-        
-        <!-- PRINT CONTROL BAR (HIDDEN IN PRINT) -->
-        <div class="no-print flex justify-between items-center mb-8 border-b border-slate-100 pb-4">
-            <a href="/dashboard" class="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 font-semibold transition-colors">
-                <i class="fa-solid fa-arrow-left"></i>
-                Back to Dashboard
-            </a>
-            <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">
-                <i class="fa-solid fa-print"></i>
-                Print / Save PDF
-            </button>
+<body>
+    <!-- Print Control -->
+    <div class="no-print max-w-4xl mx-auto mt-8 flex justify-between">
+        <a href="/dashboard" class="text-blue-600 hover:underline font-medium">&larr; Back to Dashboard</a>
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-medium">Export PDF</button>
+    </div>
+
+    <!-- PAGE 1 -->
+    <div class="page">
+        <!-- HEADER -->
+        <div class="border-b-4 border-gray-900 pb-6 mb-8 avoid-break">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-500 tracking-widest uppercase">CyberBuddy Security Operations Center (SOC)</h2>
+                    <h1 class="text-3xl font-extrabold text-gray-900 mt-1">Threat Investigation Report</h1>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-bold text-gray-500 uppercase">Document Classification</div>
+                    <div class="text-sm font-extrabold text-red-600 uppercase tracking-widest">CONFIDENTIAL / INTERNAL</div>
+                </div>
+            </div>
+            <div class="mt-6 grid grid-cols-2 gap-4">
+                <div>
+                    <div class="data-label">Report UUID</div>
+                    <div class="data-value mono">{{ scan.id }}-{{ scan.timestamp.strftime('%Y%m%d%H%M') }}</div>
+                </div>
+                <div class="text-right">
+                    <div class="data-label">Generated Date & Time</div>
+                    <div class="data-value mono">{{ scan.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</div>
+                </div>
+            </div>
         </div>
 
-        <!-- REPORT HEADER -->
-        <div class="flex justify-between items-start border-b-2 border-slate-900 pb-6">
-            <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-shield-halved text-cyan-600 text-2xl"></i>
-                    <span class="font-extrabold text-xl tracking-wider text-slate-900 uppercase">CYBERBUDDY SOC</span>
-                </div>
-                <h1 class="text-2xl font-extrabold text-slate-950">Threat Investigation Report</h1>
-                <p class="text-xs text-slate-500 font-mono">REPORT_UUID: {{ scan.id }}-{{ scan.timestamp.strftime('%Y%m%d%H%M') }}</p>
-            </div>
+        <!-- EXECUTIVE SUMMARY -->
+        <div class="avoid-break mb-8">
+            <h2 class="section-title">Executive Summary</h2>
             
-            <div class="text-right space-y-1 font-mono text-xs">
-                <div><strong>CLASSIFICATION:</strong> 
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border
-                        {% if scan.classification in ['Malicious', 'High Risk'] %} bg-red-50 text-red-700 border-red-200
-                        {% elif scan.classification in ['Suspicious', 'Low Risk'] %} bg-amber-50 text-amber-700 border-amber-200
-                        {% else %} bg-emerald-50 text-emerald-700 border-emerald-200
-                        {% endif %}">
-                        {{ scan.classification }}
-                    </span>
+            {% set ar = scan.analyst_report %}
+            {% set is_malicious = scan.classification in ['Malicious', 'High Risk'] %}
+            {% set is_suspicious = scan.classification in ['Suspicious', 'Low Risk'] %}
+            
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="border border-gray-200 p-4 rounded bg-gray-50 text-center">
+                    <div class="data-label">Threat Status</div>
+                    <div class="text-lg font-bold mt-1 
+                        {% if is_malicious %}text-red-600
+                        {% elif is_suspicious %}text-yellow-600
+                        {% else %}text-green-600{% endif %}">
+                        {{ scan.classification|upper }}
+                    </div>
                 </div>
-                <div><strong>RISK SCORE:</strong> {{ scan.risk_score }}%</div>
-                <div><strong>TIMESTAMP:</strong> {{ scan.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</div>
+                <div class="border border-gray-200 p-4 rounded bg-gray-50 text-center">
+                    <div class="data-label">Risk Score</div>
+                    <div class="text-lg font-bold mt-1 text-gray-900">{{ scan.risk_score }} / 100</div>
+                </div>
+                <div class="border border-gray-200 p-4 rounded bg-gray-50 text-center">
+                    <div class="data-label">Investigation Confidence</div>
+                    <div class="text-lg font-bold mt-1 text-gray-900">{{ ar.risk_assessment.confidence_score }}%</div>
+                </div>
+                <div class="border border-gray-200 p-4 rounded bg-gray-50 text-center overflow-hidden">
+                    <div class="data-label">Attack Type</div>
+                    <div class="text-sm font-bold mt-2 text-gray-900 truncate" title="{{ ar.attack_type }}">{{ ar.attack_type }}</div>
+                </div>
             </div>
+
+            <p class="text-sm text-gray-700 leading-relaxed text-justify">
+                <strong>Investigation Summary:</strong> On {{ scan.timestamp.strftime('%B %d, %Y') }}, the CyberBuddy SOC automated pipeline analyzed a {{ scan.scan_type|lower }} artifact submitted for inspection. The engine returned a base risk score of {{ scan.risk_score }}, yielding an overall classification of <strong>{{ scan.classification }}</strong>. The primary behavioral and structural profile maps to <em>{{ ar.attack_type }}</em>. 
+                {% if is_malicious or is_suspicious %}
+                The indicators strongly suggest a threat targeting {{ ar.attack_description.what_they_steal|lower }} with an impact potential classified as {{ ar.risk_assessment.severity|lower }}.
+                {% else %}
+                No active threat indicators were conclusively identified. The artifact is deemed benign under current intelligence parameters.
+                {% endif %}
+            </p>
         </div>
 
-        <!-- SCAN TARGET SECTION -->
-        <div class="my-6 space-y-2">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Scan Target ({{ scan.scan_type }})</h3>
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-sm break-all leading-relaxed text-slate-700">
-                {{ scan.target }}
-            </div>
+        <!-- SCAN INFORMATION -->
+        <div class="avoid-break mb-8">
+            <h2 class="section-title">Scan Information</h2>
+            <table class="report-table">
+                <tbody>
+                    <tr>
+                        <th class="w-1/4">Scan Type</th>
+                        <td class="w-1/4">{{ scan.scan_type }}</td>
+                        <th class="w-1/4">Investigation ID</th>
+                        <td class="w-1/4 mono">{{ scan.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Timestamp</th>
+                        <td>{{ scan.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+                        <th>Scan Duration</th>
+                        <td>&lt; 5 seconds</td>
+                    </tr>
+                    <tr>
+                        <th>Target / Artifact</th>
+                        <td colspan="3" class="mono text-xs break-all">{{ scan.target }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <!-- THREAT EXPLANATION SECTION -->
-        <div class="my-6 space-y-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Threat Vector Indicators & Analysis</h3>
-            <div class="border border-slate-200 rounded-xl p-6 space-y-3">
+        <!-- TECHNICAL FINDINGS -->
+        <div class="avoid-break mb-8">
+            <h2 class="section-title">Technical Findings</h2>
+            
+            <h3 class="text-sm font-bold text-gray-800 mb-2">Primary Threat Indicators</h3>
+            <ul class="list-disc pl-5 mb-6 text-sm text-gray-700 space-y-1">
                 {% if scan.threat_explanation %}
                     {% for reason in scan.threat_explanation %}
-                    <div class="flex items-start gap-3 text-sm leading-relaxed text-slate-700">
-                        <span class="mt-1">
-                            {% if '✓' in reason %}
-                                <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                            {% elif '✗' in reason %}
-                                <i class="fa-solid fa-circle-xmark text-rose-600"></i>
-                            {% else %}
-                                <i class="fa-solid fa-circle-info text-cyan-600"></i>
-                            {% endif %}
-                        </span>
-                        <span>{{ reason|replace('✓', '')|replace('✗', '')|replace('ℹ️', '')|trim }}</span>
-
-                    </div>
+                        <li>{{ reason|replace('✓', '')|replace('✗', '')|replace('ℹ️', '')|trim }}</li>
                     {% endfor %}
                 {% else %}
-                    <div class="text-sm text-slate-400 italic">No threat indicators logged for this scan.</div>
+                    <li class="italic">No specific indicators flagged.</li>
                 {% endif %}
+            </ul>
+
+            {% if scan.scan_type == 'URL' and scan.domain_info %}
+            <h3 class="text-sm font-bold text-gray-800 mb-2">OSINT & Infrastructure Data</h3>
+            <table class="report-table">
+                <tbody>
+                    <tr>
+                        <th class="w-1/4">Resolved IP (DNS)</th>
+                        <td class="w-1/4 mono">{{ scan.domain_info.ip }}</td>
+                        <th class="w-1/4">Geolocation</th>
+                        <td class="w-1/4">{{ scan.domain_info.country }}</td>
+                    </tr>
+                    <tr>
+                        <th>Registrar (RDAP)</th>
+                        <td colspan="3">{{ scan.domain_info.registrar }}</td>
+                    </tr>
+                    <tr>
+                        <th>Network ISP</th>
+                        <td colspan="3">{{ scan.domain_info.isp }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+        
+        <!-- Footer for Page 1 -->
+        <div class="mt-8 border-t border-gray-300 pt-4 flex justify-between text-[10px] text-gray-500 font-mono avoid-break">
+            <div>CyberBuddy SOC | Threat Investigation Report</div>
+            <div>Report Version: v2.1</div>
+            <div>Page 1</div>
+        </div>
+    </div> <!-- END PAGE 1 -->
+
+    <!-- PAGE 2 -->
+    <div class="page page-break">
+        
+        <!-- AI ANALYST FINDINGS -->
+        <div class="avoid-break mb-8">
+            <h2 class="section-title mt-0">AI Analyst Findings</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-sm font-bold text-gray-800 mb-2">Attack Classification: <span class="text-blue-700">{{ ar.attack_type }}</span></h3>
+                <div class="bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700 space-y-2">
+                    <p><strong>What it is:</strong> {{ ar.attack_description.what }}</p>
+                    <p><strong>Mechanics:</strong> {{ ar.attack_description.how_attackers_do_it }}</p>
+                    <p><strong>Target Objective:</strong> {{ ar.attack_description.what_they_steal }} from {{ ar.attack_description.who_is_targeted }}</p>
+                    <p><strong>Propagation:</strong> {{ ar.attack_description.how_it_spreads }}</p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-sm font-bold text-gray-800 mb-2">Detection Evidence</h3>
+                <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1 border-l-4 border-gray-300 ml-2 pl-4 py-1">
+                    {% for item in ar.detection_evidence %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 mb-2">Risk Assessment Matrix</h3>
+                <table class="report-table">
+                    <tbody>
+                        <tr>
+                            <th class="w-1/4">Business Impact</th>
+                            <td class="w-1/4">{{ ar.risk_assessment.business_impact }}</td>
+                            <th class="w-1/4">Personal Impact</th>
+                            <td class="w-1/4">{{ ar.risk_assessment.personal_impact }}</td>
+                        </tr>
+                        <tr>
+                            <th>Likelihood</th>
+                            <td>{{ ar.risk_assessment.likelihood }}</td>
+                            <th>Severity Level</th>
+                            <td>{{ ar.risk_assessment.severity }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- DOMAIN INFO / OSINT (IF URL) -->
-        {% if scan.scan_type == 'URL' and scan.domain_info %}
-        <div class="my-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">WHOIS & Geolocation OSINT</h3>
-                <div class="border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs font-mono leading-loose">
-                    <div class="flex justify-between border-b border-slate-100 pb-1">
-                        <span class="text-slate-400">IP Resolution:</span>
-                        <span class="text-slate-900 font-semibold">{{ scan.domain_info.ip }}</span>
+        <!-- MITRE ATT&CK MAPPING -->
+        {% if ar.mitre_mapping and ar.mitre_mapping|length > 0 %}
+        <div class="avoid-break mb-8">
+            <h2 class="section-title">MITRE ATT&CK Mapping</h2>
+            <div class="grid grid-cols-2 gap-4">
+                {% for technique in ar.mitre_mapping %}
+                <div class="border border-gray-200 rounded p-4 bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="text-xs font-bold text-gray-500 uppercase">{{ technique.tactic }}</div>
+                        <div class="text-xs font-mono font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded">{{ technique.technique_id }}</div>
                     </div>
-                    <div class="flex justify-between border-b border-slate-100 pb-1">
-                        <span class="text-slate-400">Registrar:</span>
-                        <span class="text-slate-900 text-right">{{ scan.domain_info.registrar }}</span>
-                    </div>
-                    <div class="flex justify-between border-b border-slate-100 pb-1">
-                        <span class="text-slate-400">Hosting Country:</span>
-                        <span class="text-slate-900">{{ scan.domain_info.country }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">Network Provider:</span>
-                        <span class="text-slate-900 truncate max-w-[200px]">{{ scan.domain_info.isp }}</span>
-                    </div>
+                    <div class="text-sm font-bold text-gray-900 mb-1">{{ technique.technique_name }}</div>
                 </div>
-            </div>
-
-            <!-- VIRUSTOTAL REPUTATION -->
-            <div class="space-y-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Vendor Reputation Ratio</h3>
-                <div class="border border-slate-200 rounded-xl p-4 flex flex-col justify-center items-center h-[126px]">
-                    {% set domain_info = scan.domain_info %}
-                    <div class="text-3xl font-extrabold text-slate-900">{{ scan.risk_score }} / 100</div>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1.5">Total OSINT Threat Score</p>
-                </div>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
+        
+        <!-- Footer for Page 2 -->
+        <div class="mt-8 border-t border-gray-300 pt-4 flex justify-between text-[10px] text-gray-500 font-mono avoid-break">
+            <div>CyberBuddy SOC | Threat Investigation Report</div>
+            <div>Report Version: v2.1</div>
+            <div>Page 2</div>
+        </div>
+    </div> <!-- END PAGE 2 -->
 
-        <!-- SIGNATURE FOOTER -->
-        <div class="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
-            <div>
-                Report generated by CyberBuddy platform.
+    <!-- PAGE 3 -->
+    <div class="page page-break">
+
+        <!-- PREVENTION PLAYBOOK -->
+        <div class="avoid-break mb-8">
+            <h2 class="section-title mt-0">Prevention Playbook</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-sm font-bold text-green-700 border-b border-green-200 pb-1 mb-3">Recommended Actions</h3>
+                    <ul class="list-none space-y-2 text-sm text-gray-700">
+                        {% for step in ar.prevention.what_to_do %}
+                        <li class="flex items-start">
+                            <span class="text-green-600 mr-2 font-bold">+</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-red-700 border-b border-red-200 pb-1 mb-3">Things to Avoid</h3>
+                    <ul class="list-none space-y-2 text-sm text-gray-700">
+                        {% for step in ar.prevention.what_not_to_do %}
+                        <li class="flex items-start">
+                            <span class="text-red-600 mr-2 font-bold">-</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
-            <div class="font-mono text-right">
-                ANALYSIS LEVEL: SOC_GRADE_v2
+            
+            <div class="mt-6 border border-gray-200 p-4 rounded bg-gray-50">
+                <h3 class="text-sm font-bold text-gray-800 mb-2">Long-Term Protection Strategy</h3>
+                <p class="text-sm text-gray-700">Ensure strict email filtering, DNS blocking for suspicious domains, and enforce multi-factor authentication (MFA) across all identity perimeters. Continuous security awareness training is advised for end-users to mitigate social engineering payloads.</p>
             </div>
         </div>
 
-    </div>
-    
+        <!-- INCIDENT RESPONSE -->
+        <div class="avoid-break mb-8">
+            <h2 class="section-title">Incident Response</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Containment -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">1. Containment & Recovery</h3>
+                    <ol class="list-decimal pl-5 text-sm text-gray-700 space-y-1">
+                        {% for step in ar.incident_response.containment %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                        {% for step in ar.incident_response.recovery %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                    </ol>
+                </div>
+                <!-- Reporting -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">2. Credentials & Reporting</h3>
+                    <ol class="list-decimal pl-5 text-sm text-gray-700 space-y-1">
+                        {% for step in ar.incident_response.credential_reset %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                        {% for step in ar.incident_response.reporting %}
+                        <li>{{ step }}</li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL INVESTIGATION VERDICT -->
+        <div class="avoid-break mt-12 border-2 border-gray-800 p-6 relative">
+            <div class="absolute -top-3 left-4 bg-white px-2 font-bold text-sm uppercase tracking-widest text-gray-900">Final Investigation Verdict</div>
+            
+            <table class="w-full text-sm">
+                <tr>
+                    <td class="w-1/3 py-2 text-gray-600 font-bold uppercase text-xs">Threat Status:</td>
+                    <td class="py-2 font-bold 
+                        {% if is_malicious %}text-red-600
+                        {% elif is_suspicious %}text-yellow-600
+                        {% else %}text-green-600{% endif %}">{{ scan.classification|upper }}</td>
+                </tr>
+                <tr class="border-t border-gray-100">
+                    <td class="py-2 text-gray-600 font-bold uppercase text-xs">Analyst Decision:</td>
+                    <td class="py-2 text-gray-900">
+                        {% if is_malicious or is_suspicious %}
+                        Isolate and remediate immediately.
+                        {% else %}
+                        No action required. Artifact is safe.
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr class="border-t border-gray-100">
+                    <td class="py-2 text-gray-600 font-bold uppercase text-xs">Recommended Action:</td>
+                    <td class="py-2 text-gray-900">Follow prescribed Incident Response steps. Close ticket upon resolution.</td>
+                </tr>
+                <tr class="border-t border-gray-100">
+                    <td class="py-2 text-gray-600 font-bold uppercase text-xs">Sign-off:</td>
+                    <td class="py-2 font-mono text-gray-500">Auto-Generated by CyberBuddy Analyst Engine</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer for Page 3 -->
+        <div class="mt-auto border-t border-gray-300 pt-4 flex justify-between text-[10px] text-gray-500 font-mono avoid-break" style="margin-top: 3rem;">
+            <div>CyberBuddy SOC | Threat Investigation Report</div>
+            <div>Report Version: v2.1</div>
+            <div>Page 3</div>
+        </div>
+    </div> <!-- END PAGE 3 -->
+
 </body>
 </html>
