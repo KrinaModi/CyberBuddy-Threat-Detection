@@ -3,87 +3,652 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberBuddy | Register</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Create your CyberBuddy analyst account and gain access to the AI-powered Security Operations Center platform.">
+    <title>CyberBuddy SOC | Request Access</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1a 100%);
-            min-height: 100vh;
-            overflow: hidden;
+        /* ============================================================
+           DESIGN TOKENS — identical to login.html for visual parity
+        ============================================================ */
+        :root {
+            --navy-950: #020617;
+            --navy-900: #0f172a;
+            --navy-800: #1e293b;
+            --navy-700: #334155;
+            --slate-500: #64748b;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --white:    #f8fafc;
+            --cyan-500: #06b6d4;
+            --cyan-400: #22d3ee;
+            --cyan-300: #67e8f9;
+            --blue-600: #2563eb;
+            --blue-500: #3b82f6;
+            --blue-400: #60a5fa;
+            --emerald:  #10b981;
+            --rose:     #f43f5e;
+            --amber:    #f59e0b;
+            --glass-bg: rgba(15, 23, 42, 0.72);
+            --glass-border: rgba(255,255,255,0.08);
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
-        .grid-bg {
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--navy-950);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Canvas background ── */
+        #cyber-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── Ambient glows ── */
+        .ambient-glow {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            filter: blur(100px);
+        }
+        .ambient-glow-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%);
+            top: -200px; left: -200px;
+        }
+        .ambient-glow-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%);
+            bottom: -150px; right: -150px;
+        }
+
+        /* ── Page wrapper ── */
+        .page-wrapper {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============================================================
+           TOP BAR — matches login.html exactly
+        ============================================================ */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.1rem 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(2,6,23,0.6);
+            backdrop-filter: blur(12px);
+        }
+        .top-bar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .shield-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2));
+            border: 1px solid rgba(6,182,212,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan-400);
+        }
+        .brand-name {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--white);
+        }
+        .brand-name span { color: var(--cyan-400); }
+        .brand-tagline {
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            color: var(--slate-500);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .top-bar-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .top-bar-nav a {
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--slate-400);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .top-bar-nav a:hover { color: var(--cyan-400); }
+        .top-bar-nav a.active { color: var(--cyan-400); font-weight: 600; }
+        .nav-back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-400);
+            text-decoration: none;
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            transition: all 0.2s;
+        }
+        .nav-back-btn:hover {
+            color: var(--white);
+            border-color: rgba(6,182,212,0.3);
+            background: rgba(6,182,212,0.06);
+        }
+
+        /* ============================================================
+           MAIN: Registration page layout
+        ============================================================ */
+        .page-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1.5rem;
+        }
+
+        /* CB Logo SVG sizing */
+        .cb-logo { flex-shrink: 0; display: block; color: var(--cyan-400); }
+        .cb-logo-sm { width: 22px; height: 22px; }
+        .cb-logo-xl { width: 52px; height: 52px; }
+
+        /* ── Brand hero above card ── */
+        .reg-brand {
+            text-align: center;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .reg-logo-wrap {
+            width: 72px; height: 72px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(59,130,246,0.1));
+            border: 1px solid rgba(6,182,212,0.25);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 40px rgba(6,182,212,0.12);
+        }
+        .reg-brand-name {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--white);
+        }
+        .reg-brand-name span { color: var(--cyan-400); }
+        .reg-brand-subtitle {
+            font-size: 0.78rem;
+            font-family: var(--font-mono);
+            color: var(--slate-400);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* ── Auth / Registration Card ── */
+        .auth-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            width: 100%;
+            max-width: 440px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.03),
+                0 0 60px rgba(6,182,212,0.06),
+                0 30px 60px rgba(0,0,0,0.5);
+            animation: card-in 0.5s cubic-bezier(.22,.68,0,1.15) both;
+        }
+        @keyframes card-in {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .auth-card-header {
+            margin-bottom: 1.75rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .auth-card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: -0.01em;
+        }
+        .auth-card-subtitle {
+            font-size: 0.76rem;
+            color: var(--slate-400);
+            margin-top: 0.3rem;
+            font-family: var(--font-mono);
+            letter-spacing: 0.02em;
+        }
+
+        /* ── Error/Message alert ── */
+        .error-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            background: rgba(244,63,94,0.08);
+            border: 1px solid rgba(244,63,94,0.2);
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+            font-size: 0.82rem;
+            color: #fda4af;
+        }
+        .error-alert i { color: var(--rose); margin-top: 0.05rem; flex-shrink: 0; }
+
+        /* ── Form elements ── */
+        .form-group { margin-bottom: 1.1rem; }
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--slate-300);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+        }
+        .input-wrapper { position: relative; }
+        .input-icon-left {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate-500);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.78rem 0.9rem 0.78rem 2.5rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: var(--white);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .form-input::placeholder { color: var(--slate-500); }
+        .form-input:focus {
+            border-color: rgba(6,182,212,0.5);
+            background: rgba(6,182,212,0.04);
+            box-shadow: 0 0 0 3px rgba(6,182,212,0.12), inset 0 0 0 1px rgba(6,182,212,0.1);
+        }
+        .form-input:focus + .input-icon-left,
+        .input-wrapper:focus-within .input-icon-left { color: var(--cyan-400); }
+
+        /* ── Password strength hint ── */
+        .password-hint {
+            font-size: 0.7rem;
+            color: var(--slate-500);
+            margin-top: 0.35rem;
+            font-family: var(--font-mono);
+        }
+
+        /* ── Submit button ── */
+        .btn-register {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            margin-top: 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--cyan-500), var(--blue-500));
+            color: var(--navy-950);
+            font-family: var(--font-main);
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(6,182,212,0.2);
+        }
+        .btn-register::before {
+            content: '';
             position: absolute;
             inset: 0;
-            background-image:
-                linear-gradient(to right, rgba(0,255,255,0.06) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0,255,255,0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
         }
-        .glass-card {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+        .btn-register:hover::before { transform: translateX(100%); }
+        .btn-register:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 30px rgba(6,182,212,0.32);
         }
-        .btn-gradient {
-            background: linear-gradient(90deg, #22d3ee, #3b82f6);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        .btn-register:active { transform: translateY(0); }
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
-        .btn-gradient:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(34, 211, 238, 0.4);
+
+        /* ── Card footer ── */
+        .card-footer {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--slate-400);
         }
-        .logo-img {
-            width: 100px;
-            display: block;
-            margin: auto;
-            margin-bottom: 8px;
-            filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6));
+        .card-footer a {
+            color: var(--cyan-400);
+            text-decoration: none;
+            font-weight: 600;
         }
+        .card-footer a:hover { text-decoration: underline; }
+
+        /* ── Security notice under card ── */
+        .secure-badge {
+            margin-top: 1.25rem;
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+        .secure-badge i { color: var(--cyan-500); font-size: 0.65rem; }
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+        .page-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(2,6,23,0.4);
+            font-size: 0.72rem;
+            color: var(--slate-500);
+        }
+        .footer-right { display: flex; gap: 1.5rem; }
+        .footer-right a {
+            color: var(--slate-500);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-right a:hover { color: var(--slate-300); }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        @media (max-width: 520px) {
+            .top-bar { padding: 0.9rem 1.25rem; }
+            .auth-card { padding: 1.75rem 1.25rem; }
+            .page-footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 4px; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center text-white relative">
-    <div class="grid-bg"></div>
+<body>
 
-    <div class="text-center mb-8 relative z-10">
-        <img src="/static/shield.png" class="logo-img" alt="CyberBuddy Logo" onerror="this.style.display='none'">
-        <h1 class="text-4xl font-bold m-0 text-white">
-            Cyber<span class="text-cyan-400">Buddy</span>
-        </h1>
-        <p class="text-slate-400 text-sm mt-2">Create your account</p>
-    </div>
+    <!-- Animated Background Canvas (shared engine) -->
+    <canvas id="cyber-canvas"></canvas>
 
-    <div class="glass-card relative z-10 w-full max-w-md p-10 rounded-3xl text-center">
-        {% if message %}
-            <p class="text-red-400 mb-4">{{ message }}</p>
-        {% endif %}
-        
-        <form method="POST" action="/register" class="space-y-4">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <input type="text" name="username" placeholder="Username" required
-                class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
-            
-            <input type="email" name="email" placeholder="Email Address" required
-                class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
-            
-            <input type="password" name="password" placeholder="Password" required
-                class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
-            
-            <input type="password" name="confirm_password" placeholder="Confirm Password" required
-                class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
-            
-            <button type="submit" class="w-full py-4 rounded-xl btn-gradient font-semibold text-lg">
-                Register
-            </button>
-        </form>
+    <!-- Ambient Glows -->
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
 
-        <p class="mt-6 text-sm text-gray-400">
-            Already have an account? <a href="/" class="text-cyan-400 hover:underline">Login</a>
-        </p>
-    </div>
+    <div class="page-wrapper">
+
+        <!-- ── TOP BAR ── -->
+        <header class="top-bar">
+            <div class="top-bar-brand">
+                <div class="shield-icon">
+                    <!-- CB Logo: Digital Eye + Hexagonal Iris -->
+                    <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
+                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
+                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
+                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
+                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
+                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
+                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="brand-name">Cyber<span>Buddy</span></div>
+                    <div class="brand-tagline">Security Operations Center</div>
+                </div>
+            </div>
+            <nav class="top-bar-nav">
+                <a href="/about">About</a>
+                <a href="/how-to-use">How to Use</a>
+                <a href="/" class="nav-back-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Login
+                </a>
+            </nav>
+        </header>
+
+        <!-- ── MAIN CONTENT ── -->
+        <main class="page-main">
+
+            <!-- Brand Hero -->
+            <div class="reg-brand">
+                <div class="reg-logo-wrap">
+                    <svg class="cb-logo cb-logo-xl" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
+                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
+                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
+                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
+                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
+                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
+                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div class="reg-brand-name">Cyber<span>Buddy</span></div>
+                <div class="reg-brand-subtitle">Request Analyst Access</div>
+            </div>
+
+            <!-- Registration Card -->
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <div class="auth-card-title">Create Analyst Account</div>
+                    <div class="auth-card-subtitle">Pending admin approval &middot; All fields required</div>
+                </div>
+
+                <!-- Flask message (registration errors / feedback) -->
+                {% if message %}
+                <div class="error-alert">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>{{ message }}</p>
+                </div>
+                {% endif %}
+
+                <!--
+                    REGISTRATION FORM — FUNCTIONALITY 100% PRESERVED
+                    action="/register", method="POST"
+                    field names: username, email, password, confirm_password
+                    CSRF token preserved
+                -->
+                <form method="POST" action="/register" id="register-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-username">Operator ID</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon-left"><i class="fa-solid fa-user-shield"></i></span>
+                            <input
+                                type="text"
+                                id="reg-username"
+                                name="username"
+                                class="form-input"
+                                placeholder="Choose a username"
+                                required
+                                autocomplete="username"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-email">Email Address</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon-left"><i class="fa-solid fa-envelope"></i></span>
+                            <input
+                                type="email"
+                                id="reg-email"
+                                name="email"
+                                class="form-input"
+                                placeholder="analyst@organization.com"
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-password">Passphrase</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon-left"><i class="fa-solid fa-key"></i></span>
+                            <input
+                                type="password"
+                                id="reg-password"
+                                name="password"
+                                class="form-input"
+                                placeholder="Minimum 8 characters"
+                                required
+                                autocomplete="new-password"
+                            >
+                        </div>
+                        <div class="password-hint">Use a strong passphrase · min. 8 characters</div>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="reg-confirm">Confirm Passphrase</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon-left"><i class="fa-solid fa-lock"></i></span>
+                            <input
+                                type="password"
+                                id="reg-confirm"
+                                name="confirm_password"
+                                class="form-input"
+                                placeholder="Re-enter your passphrase"
+                                required
+                                autocomplete="new-password"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" id="register-btn" class="btn-register">
+                        <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
+                            <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
+                            <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
+                            <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
+                            <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
+                        </svg>
+                        <span>Request Access</span>
+                        <i class="fa-solid fa-arrow-right" style="font-size:0.8rem;"></i>
+                    </button>
+                </form>
+
+                <div class="card-footer">
+                    Already have credentials?&nbsp;
+                    <a href="/">Sign In to SOC</a>
+                </div>
+            </div><!-- /auth-card -->
+
+            <div class="secure-badge">
+                <i class="fa-solid fa-lock"></i>
+                End-to-end encrypted &middot; CSRF protected &middot; Rate limited
+            </div>
+
+        </main>
+
+        <!-- ── FOOTER ── -->
+        <footer class="page-footer">
+            <div>&copy; 2026 CyberBuddy Threat Intelligence Platform &middot; All rights reserved</div>
+            <nav class="footer-right">
+                <a href="/about">About</a>
+                <a href="/how-to-use">How to Use</a>
+                <a href="/">Login</a>
+            </nav>
+        </footer>
+
+    </div><!-- /page-wrapper -->
+
+    <!-- Canvas Engine (shared across all pages) -->
+    <script src="/static/cyber-canvas.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        CyberBuddyMap.init('cyber-canvas', { maxArcs: 3, arcSpeed: 0.5, nodeSize: 2.5 });
+    });
+    </script>
+
+    <!-- Register button loading state -->
+    <script>
+    (function () {
+        var form = document.getElementById('register-form');
+        var btn  = document.getElementById('register-btn');
+        if (form && btn) {
+            form.addEventListener('submit', function () {
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Creating account…</span>';
+                btn.disabled  = true;
+                btn.style.opacity = '0.75';
+            });
+        }
+    }());
+    </script>
+
 </body>
 </html>

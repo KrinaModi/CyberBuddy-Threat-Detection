@@ -3,89 +3,1002 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How to Use CyberBuddy</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="description" content="How to use CyberBuddy SOC — a step-by-step analyst guide to scanning URLs, emails, screenshots, QR codes, and generating threat reports.">
+    <title>CyberBuddy SOC | Analyst Guide</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        /* ============================================================
+           DESIGN TOKENS — shared system
+        ============================================================ */
+        :root {
+            --navy-950: #020617;
+            --navy-900: #0f172a;
+            --navy-800: #1e293b;
+            --navy-700: #334155;
+            --slate-500: #64748b;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --white:    #f8fafc;
+            --cyan-500: #06b6d4;
+            --cyan-400: #22d3ee;
+            --cyan-300: #67e8f9;
+            --blue-600: #2563eb;
+            --blue-500: #3b82f6;
+            --blue-400: #60a5fa;
+            --emerald:  #10b981;
+            --rose:     #f43f5e;
+            --amber:    #f59e0b;
+            --violet:   #8b5cf6;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            font-family: var(--font-main);
+            background: var(--navy-950);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .grid-bg {
+
+        /* ── Canvas ── */
+        #cyber-canvas {
+            position: fixed; inset: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+
+        /* ── Glows ── */
+        .ambient-glow {
+            position: fixed; border-radius: 50%;
+            pointer-events: none; z-index: 1; filter: blur(120px);
+        }
+        .ambient-glow-1 {
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(6,182,212,0.05) 0%, transparent 70%);
+            top: -250px; left: -200px;
+        }
+        .ambient-glow-2 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%);
+            bottom: -200px; right: -150px;
+        }
+
+        /* ── Page wrapper ── */
+        .page-wrapper {
+            position: relative; z-index: 2;
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+
+        /* ============================================================
+           TOP BAR
+        ============================================================ */
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.1rem 2.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(2,6,23,0.6); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar-brand { display: flex; align-items: center; gap: 0.75rem; }
+        .shield-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2));
+            border: 1px solid rgba(6,182,212,0.3);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--cyan-400);
+        }
+        .brand-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; color: var(--white); }
+        .brand-name span { color: var(--cyan-400); }
+        .brand-tagline { font-size: 0.68rem; font-family: var(--font-mono); color: var(--slate-500); letter-spacing: 0.06em; text-transform: uppercase; }
+        .top-bar-nav { display: flex; align-items: center; gap: 1.5rem; }
+        .top-bar-nav a { font-size: 0.82rem; font-weight: 500; color: var(--slate-400); text-decoration: none; transition: color 0.2s; }
+        .top-bar-nav a:hover { color: var(--white); }
+        .top-bar-nav a.active { color: var(--cyan-400); font-weight: 600; }
+        .nav-cta {
+            display: flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 1rem; border-radius: 8px;
+            background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.2);
+            color: var(--cyan-400) !important; font-weight: 600 !important; font-size: 0.8rem !important;
+            transition: all 0.2s !important;
+        }
+        .nav-cta:hover { background: rgba(6,182,212,0.18) !important; }
+
+        /* CB Logo sizing */
+        .cb-logo { flex-shrink: 0; display: block; color: var(--cyan-400); }
+        .cb-logo-sm { width: 22px; height: 22px; }
+        .cb-logo-xl { width: 52px; height: 52px; }
+
+        /* ============================================================
+           LAYOUT UTILITIES
+        ============================================================ */
+        .content-wrap { max-width: 1100px; margin: 0 auto; width: 100%; padding: 0 2.5rem; }
+        .section { padding: 5rem 2.5rem; max-width: 1100px; margin: 0 auto; width: 100%; }
+        .section-label {
+            font-size: 0.72rem; font-family: var(--font-mono);
+            font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--cyan-500);
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-label::before { content: ''; width: 24px; height: 1px; background: var(--cyan-500); display: block; }
+        .section-title {
+            font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+            font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+            color: var(--white); margin-bottom: 1rem;
+        }
+        .section-title span { color: var(--cyan-400); }
+        .section-desc { font-size: 1rem; color: var(--slate-400); line-height: 1.7; max-width: 600px; }
+        .section-divider { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(6,182,212,0.15), transparent); }
+
+        /* ============================================================
+           HERO
+        ============================================================ */
+        .hero {
+            padding: 7rem 2.5rem 4rem; max-width: 1100px; margin: 0 auto; width: 100%;
+        }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.35rem 0.9rem; border-radius: 100px;
+            background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.18);
+            font-size: 0.72rem; font-family: var(--font-mono); font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan-400);
+            margin-bottom: 1.75rem;
+        }
+        .hero-title {
+            font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 800; letter-spacing: -0.035em;
+            line-height: 1.15; color: var(--white); margin-bottom: 1.25rem;
+        }
+        .hero-title .grad {
+            background: linear-gradient(90deg, var(--cyan-400), var(--blue-400));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-desc { font-size: 1rem; color: var(--slate-400); line-height: 1.75; max-width: 580px; }
+
+        /* ============================================================
+           QUICK START — Tab Navigation
+        ============================================================ */
+        .tabs-nav {
+            display: flex; gap: 0.25rem; flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            margin-bottom: 2.5rem;
+        }
+        .tab-btn {
+            padding: 0.7rem 1.2rem;
+            background: transparent; border: none; border-bottom: 2px solid transparent;
+            color: var(--slate-400); font-family: var(--font-main); font-size: 0.84rem; font-weight: 500;
+            cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+            transition: color 0.2s, border-color 0.2s;
+            position: relative; bottom: -1px;
+        }
+        .tab-btn:hover { color: var(--slate-200); }
+        .tab-btn.active { color: var(--cyan-400); border-bottom-color: var(--cyan-400); }
+        .tab-btn i { font-size: 0.85rem; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ============================================================
+           STEP-BY-STEP GUIDES (inside each tab panel)
+        ============================================================ */
+        .steps-list { display: flex; flex-direction: column; gap: 0; }
+
+        .step-item {
+            display: flex; gap: 1.5rem;
+            padding: 1.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+        }
+        .step-item:last-child { border-bottom: none; }
+
+        /* Vertical connector line */
+        .step-item:not(:last-child) .step-num-wrap::after {
+            content: '';
             position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
-            background-size: 45px 45px;
-            pointer-events: none;
-            z-index: 0;
+            left: 19px; top: calc(1.75rem + 40px);
+            width: 2px;
+            height: calc(100% - 40px - 1.75rem);
+            background: linear-gradient(180deg, rgba(6,182,212,0.3) 0%, rgba(6,182,212,0.04) 100%);
         }
-        .glass-card {
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+
+        .step-num-wrap {
+            flex-shrink: 0; position: relative;
+            display: flex; flex-direction: column; align-items: center;
         }
+        .step-num {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 2px solid rgba(6,182,212,0.35);
+            background: rgba(6,182,212,0.08);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 700; font-family: var(--font-mono);
+            color: var(--cyan-400); flex-shrink: 0;
+        }
+
+        .step-body { flex: 1; }
+        .step-title { font-size: 1rem; font-weight: 700; color: var(--white); margin-bottom: 0.45rem; }
+        .step-desc { font-size: 0.84rem; color: var(--slate-400); line-height: 1.7; margin-bottom: 0.75rem; }
+        .step-tip {
+            display: flex; align-items: flex-start; gap: 0.6rem;
+            padding: 0.7rem 0.9rem;
+            background: rgba(6,182,212,0.04);
+            border: 1px solid rgba(6,182,212,0.12);
+            border-radius: 8px;
+            font-size: 0.78rem; color: var(--slate-400); line-height: 1.6;
+        }
+        .step-tip i { color: var(--cyan-500); margin-top: 0.05rem; flex-shrink: 0; font-size: 0.8rem; }
+        .step-tip strong { color: var(--cyan-400); font-weight: 600; }
+
+        .step-code {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px; padding: 0.75rem 1rem;
+            font-family: var(--font-mono); font-size: 0.78rem;
+            color: var(--cyan-300); margin-top: 0.75rem; overflow-x: auto;
+            white-space: pre;
+        }
+        .step-code .comment { color: var(--slate-500); }
+
+        /* ============================================================
+           MODULE QUICK REFERENCE GRID
+        ============================================================ */
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .qr-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: rgba(10,18,38,0.85);
+            border: 1px solid rgba(255,255,255,0.07);
+            display: flex; flex-direction: column; gap: 0.6rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .qr-card:hover { background: rgba(6,182,212,0.04); border-color: rgba(6,182,212,0.15); }
+        .qr-card-head { display: flex; align-items: center; gap: 0.7rem; }
+        .qr-icon {
+            width: 36px; height: 36px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; flex-shrink: 0;
+        }
+        .qr-icon.cyan   { background: rgba(6,182,212,0.1); color: var(--cyan-400); border: 1px solid rgba(6,182,212,0.18); }
+        .qr-icon.blue   { background: rgba(59,130,246,0.1); color: var(--blue-400); border: 1px solid rgba(59,130,246,0.18); }
+        .qr-icon.emerald{ background: rgba(16,185,129,0.1); color: var(--emerald);  border: 1px solid rgba(16,185,129,0.18); }
+        .qr-icon.amber  { background: rgba(245,158,11,0.1); color: var(--amber);    border: 1px solid rgba(245,158,11,0.18); }
+        .qr-icon.violet { background: rgba(139,92,246,0.1); color: var(--violet);   border: 1px solid rgba(139,92,246,0.18); }
+        .qr-icon.rose   { background: rgba(244,63,94,0.1);  color: var(--rose);     border: 1px solid rgba(244,63,94,0.18); }
+        .qr-name { font-size: 0.9rem; font-weight: 700; color: var(--white); }
+        .qr-input {
+            font-size: 0.7rem; font-family: var(--font-mono); color: var(--slate-500);
+            letter-spacing: 0.04em; text-transform: uppercase;
+        }
+        .qr-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+        .qr-tag {
+            font-size: 0.65rem; font-family: var(--font-mono); font-weight: 600;
+            padding: 0.15rem 0.45rem; border-radius: 4px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--slate-400);
+        }
+
+        /* ============================================================
+           FAQ ACCORDION
+        ============================================================ */
+        .faq-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .faq-item {
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px; overflow: hidden;
+            background: rgba(10,18,38,0.8);
+        }
+        .faq-question {
+            width: 100%; background: transparent; border: none; padding: 1.1rem 1.4rem;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            cursor: pointer; text-align: left;
+            font-family: var(--font-main); font-size: 0.9rem; font-weight: 600;
+            color: var(--slate-200);
+            transition: color 0.2s;
+        }
+        .faq-question:hover { color: var(--white); }
+        .faq-question[aria-expanded="true"] { color: var(--cyan-400); }
+        .faq-chevron {
+            flex-shrink: 0; font-size: 0.75rem; color: var(--slate-500);
+            transition: transform 0.28s ease;
+        }
+        .faq-question[aria-expanded="true"] .faq-chevron {
+            transform: rotate(180deg);
+            color: var(--cyan-400);
+        }
+        .faq-answer {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1), padding 0.2s;
+        }
+        .faq-answer.open { max-height: 400px; }
+        .faq-answer-inner {
+            padding: 0 1.4rem 1.2rem;
+            font-size: 0.84rem; color: var(--slate-400); line-height: 1.72;
+        }
+        .faq-answer-inner a { color: var(--cyan-400); text-decoration: none; }
+        .faq-answer-inner a:hover { text-decoration: underline; }
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+        .page-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 2.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(2,6,23,0.4);
+            font-size: 0.72rem; color: var(--slate-500);
+            flex-wrap: wrap; gap: 0.75rem;
+        }
+        .footer-right { display: flex; gap: 1.5rem; }
+        .footer-right a { color: var(--slate-500); text-decoration: none; transition: color 0.2s; }
+        .footer-right a:hover { color: var(--slate-300); }
+
+        /* ============================================================
+           ANIMATIONS
+        ============================================================ */
+        .fade-in-up {
+            opacity: 0; transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        @media (max-width: 900px) {
+            .qr-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 620px) {
+            .top-bar { padding: 0.9rem 1.25rem; }
+            .hero { padding: 4rem 1.25rem 3rem; }
+            .section { padding: 3rem 1.25rem; }
+            .qr-grid { grid-template-columns: 1fr; }
+            .page-footer { flex-direction: column; align-items: center; text-align: center; }
+            .top-bar-nav a:not(.nav-cta) { display: none; }
+            .step-item { flex-direction: column; gap: 0.75rem; }
+            .step-num-wrap::after { display: none; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 4px; }
     </style>
 </head>
-<body class="min-h-screen text-slate-200 relative overflow-x-hidden flex flex-col justify-between">
-    <div class="grid-bg"></div>
+<body>
 
-    <!-- NAVBAR -->
-    <header class="w-full relative z-10 border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-2.5">
-                <i class="fa-solid fa-shield-halved text-cyan-400 text-2xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"></i>
-                <span class="font-extrabold text-xl tracking-wider bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">CYBERBUDDY</span>
-            </div>
-            
-            <nav class="flex items-center gap-8 text-sm font-semibold">
-                <a href="/about" class="text-slate-400 hover:text-cyan-400 transition-colors">About</a>
-                <a href="/how-to-use" class="text-cyan-400 font-bold">How to Use</a>
-                <a href="/" class="text-slate-400 hover:text-cyan-400 transition-colors">Home</a>
-            </nav>
-        </div>
-    </header>
+    <canvas id="cyber-canvas"></canvas>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
 
-    <!-- CONTENT -->
-    <main class="relative z-10 flex-1 max-w-7xl mx-auto px-6 py-16 flex flex-col items-center justify-center text-center">
-        <div class="glass-card max-w-xl w-full p-10 rounded-3xl space-y-6 text-left shadow-2xl">
-            <h1 class="text-3xl font-extrabold text-white text-center border-b border-slate-800 pb-4">
-                How to <span class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">Use CyberBuddy</span>
-            </h1>
-            
-            <div class="space-y-4 text-slate-300">
-                <div class="flex gap-3">
-                    <span class="h-6 w-6 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</span>
-                    <p class="leading-relaxed"><strong>Register or Login</strong> to acquire session authorization for the security operations console.</p>
+    <div class="page-wrapper">
+
+        <!-- ── TOP BAR ── -->
+        <header class="top-bar">
+            <div class="top-bar-brand">
+                <div class="shield-icon">
+                    <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
+                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
+                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
+                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
+                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
+                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
+                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
+                    </svg>
                 </div>
-                <div class="flex gap-3">
-                    <span class="h-6 w-6 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</span>
-                    <p class="leading-relaxed"><strong>Paste the Indicator</strong> (a URL or an email raw body text snippet) into the terminal input box on the dashboard.</p>
-                </div>
-                <div class="flex gap-3">
-                    <span class="h-6 w-6 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</span>
-                    <p class="leading-relaxed"><strong>Analyze Indicator</strong> to process routing through the dual-engine. The system checks OSINT or NLP features depending on the indicator format.</p>
-                </div>
-                <div class="flex gap-3">
-                    <span class="h-6 w-6 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">4</span>
-                    <p class="leading-relaxed"><strong>Inspect Findings</strong>, generate downloadable investigation reports, or review systemic threat dispersion charts.</p>
+                <div>
+                    <div class="brand-name">Cyber<span>Buddy</span></div>
+                    <div class="brand-tagline">Security Operations Center</div>
                 </div>
             </div>
-            
-            <div class="pt-4 text-center">
-                <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold rounded-xl transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Back to Home</span>
+            <nav class="top-bar-nav">
+                <a href="/about">About</a>
+                <a href="/how-to-use" class="active">How to Use</a>
+                <a href="/" class="nav-cta">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Login
                 </a>
-            </div>
-        </div>
-    </main>
+            </nav>
+        </header>
 
-    <!-- FOOTER -->
-    <footer class="w-full relative z-10 border-t border-slate-900 bg-slate-950/20 py-6 text-center text-xs text-slate-500">
-        &copy; 2026 CyberBuddy Threat Intelligence Platform. All rights reserved.
-    </footer>
+        <!-- ================================================================
+             HERO
+        ================================================================ -->
+        <div class="hero">
+            <div class="hero-eyebrow">Analyst Guide</div>
+            <h1 class="hero-title">
+                How to Use<br>
+                <span class="grad">CyberBuddy SOC</span>
+            </h1>
+            <p class="hero-desc">
+                Step-by-step operational guides for every detection module.
+                From your first login to downloading a finished incident report —
+                everything you need to start analyzing threats today.
+            </p>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             MODULE QUICK REFERENCE
+        ================================================================ -->
+        <section class="section fade-in-up">
+            <div class="section-label">Module Reference</div>
+            <h2 class="section-title">Pick Your <span>Starting Point</span></h2>
+            <p class="section-desc" style="margin-bottom: 2rem;">
+                Choose a module based on the indicator type you have.
+            </p>
+            <div class="qr-grid">
+                <div class="qr-card">
+                    <div class="qr-card-head">
+                        <div class="qr-icon cyan"><i class="fa-solid fa-link"></i></div>
+                        <div>
+                            <div class="qr-name">URL Scanner</div>
+                            <div class="qr-input">Input: URL string</div>
+                        </div>
+                    </div>
+                    <div class="qr-tags">
+                        <span class="qr-tag">Phishing</span>
+                        <span class="qr-tag">Malware</span>
+                        <span class="qr-tag">Drive-by</span>
+                        <span class="qr-tag">Redirect</span>
+                    </div>
+                </div>
+                <div class="qr-card">
+                    <div class="qr-card-head">
+                        <div class="qr-icon blue"><i class="fa-solid fa-envelope-open-text"></i></div>
+                        <div>
+                            <div class="qr-name">Email Analysis</div>
+                            <div class="qr-input">Input: Email body text</div>
+                        </div>
+                    </div>
+                    <div class="qr-tags">
+                        <span class="qr-tag">Spear phishing</span>
+                        <span class="qr-tag">BEC</span>
+                        <span class="qr-tag">Social eng.</span>
+                    </div>
+                </div>
+                <div class="qr-card">
+                    <div class="qr-card-head">
+                        <div class="qr-icon emerald"><i class="fa-solid fa-camera"></i></div>
+                        <div>
+                            <div class="qr-name">Screenshot OCR</div>
+                            <div class="qr-input">Input: Image file</div>
+                        </div>
+                    </div>
+                    <div class="qr-tags">
+                        <span class="qr-tag">Fake login</span>
+                        <span class="qr-tag">Chat screenshot</span>
+                        <span class="qr-tag">Ad fraud</span>
+                    </div>
+                </div>
+                <div class="qr-card">
+                    <div class="qr-card-head">
+                        <div class="qr-icon amber"><i class="fa-solid fa-qrcode"></i></div>
+                        <div>
+                            <div class="qr-name">QR Code Scanner</div>
+                            <div class="qr-input">Input: QR image</div>
+                        </div>
+                    </div>
+                    <div class="qr-tags">
+                        <span class="qr-tag">Quishing</span>
+                        <span class="qr-tag">Redirect</span>
+                        <span class="qr-tag">Malware drop</span>
+                    </div>
+                </div>
+                <div class="qr-card">
+                    <div class="qr-card-head">
+                        <div class="qr-icon violet"><i class="fa-solid fa-brain"></i></div>
+                        <div>
+                            <div class="qr-name">AI Analyst</div>
+                            <div class="qr-input">Input: Scan results</div>
+                        </div>
+                    </div>
+                    <div class="qr-tags">
+                        <span class="qr-tag">MITRE map</span>
+                        <span class="qr-tag">Narrative</span>
+                        <span class="qr-tag">Remediation</span>
+                    </div>
+                </div>
+                <div class="qr-card">
+                    <div class="qr-card-head">
+                        <div class="qr-icon rose"><i class="fa-solid fa-file-lines"></i></div>
+                        <div>
+                            <div class="qr-name">Report Generator</div>
+                            <div class="qr-input">Input: Session data</div>
+                        </div>
+                    </div>
+                    <div class="qr-tags">
+                        <span class="qr-tag">Incident doc</span>
+                        <span class="qr-tag">Compliance</span>
+                        <span class="qr-tag">Download</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             STEP-BY-STEP TAB GUIDES
+        ================================================================ -->
+        <section class="section fade-in-up" id="guides">
+            <div class="section-label">Step-by-Step Guides</div>
+            <h2 class="section-title">Analyst <span>Workflows</span></h2>
+            <p class="section-desc" style="margin-bottom: 2.5rem;">
+                Detailed, module-specific operational procedures for the most common analyst tasks.
+            </p>
+
+            <!-- Tab navigation -->
+            <div class="tabs-nav" role="tablist" aria-label="Module guides">
+                <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-login" id="btn-login">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Getting Started
+                </button>
+                <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-url" id="btn-url">
+                    <i class="fa-solid fa-link"></i> URL Scan
+                </button>
+                <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-email" id="btn-email">
+                    <i class="fa-solid fa-envelope"></i> Email Analysis
+                </button>
+                <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-image" id="btn-image">
+                    <i class="fa-solid fa-camera"></i> Screenshot &amp; QR
+                </button>
+                <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-report" id="btn-report">
+                    <i class="fa-solid fa-file-lines"></i> Reports
+                </button>
+            </div>
+
+            <!-- Tab: Getting Started -->
+            <div class="tab-panel active" id="tab-login" role="tabpanel" aria-labelledby="btn-login">
+                <div class="steps-list">
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">01</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Navigate to the Login Portal</div>
+                            <div class="step-desc">
+                                Open the CyberBuddy SOC platform in your browser. You will arrive at the
+                                main authentication screen. The animated world map in the background is the
+                                live geo-intelligence canvas — it will later reflect real threat data.
+                            </div>
+                            <div class="step-tip"><i class="fa-solid fa-circle-info"></i><span>Always access the platform over HTTPS. The system enforces TLS 1.3 and rate-limits login attempts.</span></div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">02</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Enter Your Analyst Credentials</div>
+                            <div class="step-desc">
+                                Enter your <strong>Operator ID</strong> (username) and <strong>Passphrase</strong>
+                                in the authentication card, then click <em>Login to SOC Platform</em>.
+                                If you do not have an account, click <em>Request Access</em> to register.
+                            </div>
+                            <div class="step-tip"><i class="fa-solid fa-shield-halved"></i><span><strong>CSRF protection</strong> is active on every form. Do not attempt to submit forms programmatically without the token.</span></div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">03</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Explore the Dashboard</div>
+                            <div class="step-desc">
+                                After authentication you will land on the SOC Dashboard. The left
+                                navigation panel lists all six detection modules. Use the top search bar
+                                to find previous scans, or click <em>New Analysis</em> to submit a fresh indicator.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">04</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Explore Modules (No Login Required)</div>
+                            <div class="step-desc">
+                                On the login screen, click <em>Explore Modules</em> to open the full-screen
+                                module overview without logging in. This is designed for demonstrations and onboarding new analysts.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: URL Scan -->
+            <div class="tab-panel" id="tab-url" role="tabpanel" aria-labelledby="btn-url">
+                <div class="steps-list">
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">01</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Select URL Scanner</div>
+                            <div class="step-desc">From the dashboard, click <strong>URL Scanner</strong> in the sidebar or the module card on the home screen.</div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">02</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Paste the Suspicious URL</div>
+                            <div class="step-desc">
+                                Paste the full URL into the input field — including the protocol
+                                (<code>http://</code> or <code>https://</code>). The scanner handles
+                                raw URLs, shortened links, and redirect chains.
+                            </div>
+                            <div class="step-code">https://suspicious-login.example-bank.com/verify?token=abc123</div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">03</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Review Feature Extraction Output</div>
+                            <div class="step-desc">
+                                The scanner extracts 20+ features including domain age, IP reputation,
+                                URL length, special character density, subdomain depth, HTTPS validity,
+                                redirect count, and lexical entropy. All extracted features are shown
+                                in the results panel.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">04</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Read the ML Verdict + OSINT Enrichment</div>
+                            <div class="step-desc">
+                                The Random Forest model outputs a threat probability score (0–100%).
+                                Alongside the ML result, OSINT lookups retrieve reputation data from
+                                threat intelligence feeds and display geolocation, hosting provider,
+                                and blacklist status.
+                            </div>
+                            <div class="step-tip"><i class="fa-solid fa-triangle-exclamation"></i><span>A score above <strong>70%</strong> is considered <strong>High Risk</strong>. Scores between 40–70% indicate <strong>Suspicious</strong>. Always cross-reference with OSINT data.</span></div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">05</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Forward to AI Analyst</div>
+                            <div class="step-desc">
+                                Click <em>Analyze with AI</em> to pass the scan results to the AI Analyst
+                                for a threat narrative, MITRE ATT&CK technique identification, and remediation guidance.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Email Analysis -->
+            <div class="tab-panel" id="tab-email" role="tabpanel" aria-labelledby="btn-email">
+                <div class="steps-list">
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">01</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Select Email Analysis</div>
+                            <div class="step-desc">Navigate to <strong>Email Analysis</strong> from the dashboard sidebar.</div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">02</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Paste the Raw Email Body</div>
+                            <div class="step-desc">
+                                Copy and paste the full text body of the suspicious email into the text area.
+                                Include the full content — subject hints, greeting, body, footer, and any
+                                visible URLs. Do not include raw email headers unless instructed.
+                            </div>
+                            <div class="step-tip"><i class="fa-solid fa-circle-info"></i><span>The NLP model was trained on diverse phishing corpora. Best results require at least <strong>3–4 sentences</strong> of email body text.</span></div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">03</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Review Tokenization and Classification</div>
+                            <div class="step-desc">
+                                The NLP pipeline tokenizes the input, removes stop words, applies TF-IDF
+                                vectorization, and classifies using a trained scikit-learn model.
+                                The output shows which tokens contributed highest weight to the verdict
+                                (phishing-indicative n-grams are highlighted).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">04</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Extract and Scan Embedded URLs</div>
+                            <div class="step-desc">
+                                Any URLs found in the email body are automatically extracted and can be
+                                forwarded directly to the URL Scanner with a single click — without
+                                manually copying them.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Screenshot & QR -->
+            <div class="tab-panel" id="tab-image" role="tabpanel" aria-labelledby="btn-image">
+                <div class="steps-list">
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">01</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Choose Screenshot OCR or QR Code Scanner</div>
+                            <div class="step-desc">
+                                Use <strong>Screenshot OCR</strong> for images containing text — phishing pages, chat screenshots, suspicious ads.
+                                Use <strong>QR Code Scanner</strong> when you have a physical or digital QR code to decode.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">02</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Upload Your Image File</div>
+                            <div class="step-desc">
+                                Click the upload area or drag-and-drop your image. Supported formats:
+                                <strong>PNG, JPG, JPEG, WEBP, BMP</strong>. Maximum file size: 10 MB.
+                                The image is processed locally and never transmitted externally.
+                            </div>
+                            <div class="step-tip"><i class="fa-solid fa-circle-info"></i><span>For best OCR accuracy, use images with a minimum resolution of <strong>800×600 px</strong> and clear, high-contrast text.</span></div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">03</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Review Extracted Text / Decoded Payload</div>
+                            <div class="step-desc">
+                                <strong>OCR:</strong> RapidOCR extracts all visible text from the image.
+                                Review the extracted text for indicators — URLs, email addresses, phone numbers, brand names.<br><br>
+                                <strong>QR:</strong> OpenCV decodes the QR payload (typically a URL).
+                                The decoded URL is displayed before any further analysis.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">04</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Route Indicators to the Appropriate Module</div>
+                            <div class="step-desc">
+                                Extracted URLs are automatically routed to the URL Scanner.
+                                Email-like content is routed to Email Analysis.
+                                All routing can be reviewed and overridden before submission.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Reports -->
+            <div class="tab-panel" id="tab-report" role="tabpanel" aria-labelledby="btn-report">
+                <div class="steps-list">
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">01</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Complete a Full Analysis Session</div>
+                            <div class="step-desc">
+                                Before generating a report, ensure you have completed at least one
+                                scan and reviewed the AI Analyst output. Reports are compiled from
+                                the current session's analysis history.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">02</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Open the Report Generator</div>
+                            <div class="step-desc">
+                                Click <strong>Generate Report</strong> at the bottom of any completed
+                                analysis page, or navigate directly to <em>Report Generator</em>
+                                from the sidebar.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">03</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Review the Compiled Report</div>
+                            <div class="step-desc">
+                                The report includes: original indicator, scan timestamp, analyst ID,
+                                extracted features, ML probability score, OSINT findings, AI Analyst
+                                narrative, MITRE ATT&CK technique references, risk severity rating,
+                                and recommended actions.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-num-wrap"><div class="step-num">04</div></div>
+                        <div class="step-body">
+                            <div class="step-title">Download or Share</div>
+                            <div class="step-desc">
+                                Download the report as a structured document for filing as an incident record,
+                                sharing with your team, or submitting for compliance review.
+                            </div>
+                            <div class="step-tip"><i class="fa-solid fa-lock"></i><span>Reports contain sensitive threat data. Distribute only over secure, authenticated channels within your organization.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             FAQ ACCORDION
+        ================================================================ -->
+        <section class="section fade-in-up" id="faq">
+            <div class="section-label">Frequently Asked Questions</div>
+            <h2 class="section-title">Common <span>Analyst Questions</span></h2>
+            <p class="section-desc" style="margin-bottom: 2.5rem;">Everything you need to know before your first analysis session.</p>
+
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-1">
+                        Does CyberBuddy send my indicators to external servers?
+                        <span class="faq-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </button>
+                    <div class="faq-answer" id="faq-1" role="region">
+                        <div class="faq-answer-inner">
+                            All ML classification and NLP analysis runs entirely on your local server — no indicator is forwarded to external AI endpoints for inference. OSINT lookups (reputation checks, DNS, WHOIS) do make outbound requests to configured intelligence APIs, but these are always optional and configurable in the environment settings.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-2">
+                        How accurate is the URL Scanner's ML model?
+                        <span class="faq-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </button>
+                    <div class="faq-answer" id="faq-2" role="region">
+                        <div class="faq-answer-inner">
+                            The URL Scanner's Random Forest model is trained and cross-validated on labeled phishing and benign URL datasets. Accuracy figures vary by dataset composition, but in testing the model achieves above 95% on common phishing patterns. The OSINT enrichment layer provides a second validation signal to reduce false positives. Always treat the ML score as one input, not a final verdict, especially for novel or obfuscated domains.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-3">
+                        Can I use CyberBuddy without OSINT API keys configured?
+                        <span class="faq-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </button>
+                    <div class="faq-answer" id="faq-3" role="region">
+                        <div class="faq-answer-inner">
+                            Yes. All ML and NLP classification modules operate fully offline without any API keys. OSINT enrichment (VirusTotal, AbuseIPDB, OTX, IPInfo, URLhaus) requires keys configured in the <code>.env</code> file. If keys are absent, OSINT results will show as unavailable but all local analysis will function normally.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-4">
+                        What image types does the Screenshot OCR module accept?
+                        <span class="faq-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </button>
+                    <div class="faq-answer" id="faq-4" role="region">
+                        <div class="faq-answer-inner">
+                            The OCR module accepts PNG, JPG, JPEG, WEBP, and BMP formats up to 10 MB. For best results, provide images with high contrast, minimum 800×600 resolution, and horizontal text orientation. Curved, rotated, or highly stylized fonts may reduce OCR confidence.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-5">
+                        How do I register a new analyst account?
+                        <span class="faq-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </button>
+                    <div class="faq-answer" id="faq-5" role="region">
+                        <div class="faq-answer-inner">
+                            On the login screen, click <strong>Request Access</strong> below the login form. Complete the registration form with your Operator ID, email address, and passphrase. New accounts may require administrator approval before access is granted, depending on your platform configuration.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-6">
+                        Is session data persisted between logins?
+                        <span class="faq-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </button>
+                    <div class="faq-answer" id="faq-6" role="region">
+                        <div class="faq-answer-inner">
+                            Analysis history and generated reports are stored in the local SQLite database and are accessible across sessions when you log in with the same analyst account. CSRF tokens and session cookies are rotated on each login for security.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             FOOTER
+        ================================================================ -->
+        <footer class="page-footer">
+            <div>&copy; 2026 CyberBuddy Threat Intelligence Platform &middot; All rights reserved</div>
+            <nav class="footer-right">
+                <a href="/about">About</a>
+                <a href="/how-to-use">How to Use</a>
+                <a href="/">Login</a>
+                <a href="/admin">Admin</a>
+            </nav>
+        </footer>
+
+    </div><!-- /page-wrapper -->
+
+    <!-- Canvas Engine -->
+    <script src="/static/cyber-canvas.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        CyberBuddyMap.init('cyber-canvas', { maxArcs: 2, arcSpeed: 0.4, nodeSize: 2 });
+    });
+    </script>
+
+    <!-- Tab Controller -->
+    <script>
+    (function () {
+        'use strict';
+        var tabs    = document.querySelectorAll('.tab-btn');
+        var panels  = document.querySelectorAll('.tab-panel');
+
+        tabs.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var target = document.getElementById(btn.getAttribute('aria-controls'));
+                if (!target) return;
+
+                // Deactivate all
+                tabs.forEach(function (b) { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+                panels.forEach(function (p) { p.classList.remove('active'); });
+
+                // Activate clicked
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected', 'true');
+                target.classList.add('active');
+            });
+        });
+    }());
+    </script>
+
+    <!-- FAQ Accordion Controller -->
+    <script>
+    (function () {
+        'use strict';
+        document.querySelectorAll('.faq-question').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var expanded = btn.getAttribute('aria-expanded') === 'true';
+                var answer   = document.getElementById(btn.getAttribute('aria-controls'));
+
+                // Close all others
+                document.querySelectorAll('.faq-question').forEach(function (b) {
+                    b.setAttribute('aria-expanded', 'false');
+                    var a = document.getElementById(b.getAttribute('aria-controls'));
+                    if (a) a.classList.remove('open');
+                });
+
+                // Toggle current
+                if (!expanded) {
+                    btn.setAttribute('aria-expanded', 'true');
+                    if (answer) answer.classList.add('open');
+                }
+            });
+        });
+    }());
+    </script>
+
+    <!-- Scroll-triggered fade-in -->
+    <script>
+    (function () {
+        'use strict';
+        if (!('IntersectionObserver' in window)) {
+            document.querySelectorAll('.fade-in-up').forEach(function (el) { el.classList.add('visible'); });
+            return;
+        }
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.fade-in-up').forEach(function (el) { observer.observe(el); });
+    }());
+    </script>
+
 </body>
 </html>

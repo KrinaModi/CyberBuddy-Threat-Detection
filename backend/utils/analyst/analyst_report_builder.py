@@ -82,6 +82,82 @@ def build_analyst_report(scan_type, features, risk_score, classification, osint_
         prevention = get_prevention(attack_type, classification)
         ir = get_incident_response(attack_type, classification, scan_type)
     
+    # --- NEW ENTERPRISE SOC DASHBOARD FIELDS ---
+    
+    # 1. Build IOCs
+    iocs = []
+    if osint_data:
+        if osint_data.get("ip") and osint_data.get("ip") != "Not resolved":
+            iocs.append({"type": "IP Address", "value": osint_data["ip"]})
+        if osint_data.get("registrar") and osint_data.get("registrar") != "Unknown Registrar":
+            iocs.append({"type": "Registrar", "value": osint_data["registrar"]})
+            
+    if nlp_analysis and nlp_analysis.get("top_features"):
+        keywords = [item["word"] for item in nlp_analysis["top_features"] if item["contribution"] > 0.05]
+        if keywords:
+            iocs.append({"type": "Suspicious Keywords", "value": ", ".join(keywords)})
+            
+    if features.get("is_ip_address"):
+        iocs.append({"type": "Format Indicator", "value": "Raw IP Address"})
+        
+    if scan_type == "URL" and osint_data:
+        # If it's a URL, we might not have the raw target here directly, but we can assume IOCs
+        iocs.append({"type": "Target Type", "value": "URL / Domain"})
+    elif scan_type == "EMAIL":
+        iocs.append({"type": "Target Type", "value": "Email Body / Content"})
+
+    if not iocs:
+        iocs.append({"type": "System", "value": "No specific IOCs extracted."})
+
+    # 2. Parse Evidence Table
+    evidence_table = []
+    for ev in evidence:
+        if ev.startswith("[") and "]" in ev:
+            source = ev[1:ev.find("]")]
+            reason = ev[ev.find("]")+1:].strip()
+            confidence = "High" if source in ["VT", "DNS", "RDAP", "OCR/CV"] else "Medium" if source in ["GEOIP", "STRUCT", "PROTOCOL"] else "Low"
+        else:
+            source = "SYSTEM"
+            reason = ev
+            confidence = "Low"
+            
+        evidence_table.append({
+            "evidence": reason,
+            "source": source,
+            "confidence": confidence,
+            "reason": reason
+        })
+
+    # 3. Timeline
+    incident_timeline = [
+        {"step": "Input Received", "status": "Completed"},
+        {"step": "Preprocessing & Feature Extraction", "status": "Completed"},
+        {"step": "Threat Detection & ML Inference", "status": "Completed"},
+        {"step": "Evidence Collection & OSINT", "status": "Completed"},
+        {"step": "MITRE ATT&CK Mapping", "status": "Completed"},
+        {"step": "Risk Score Calculation", "status": "Completed"},
+        {"step": "Analyst Report Generated", "status": "Completed"}
+    ]
+
+    # 4. Executive Summary
+    executive_summary = {
+        "what_happened": description.get("what", "A security scan was executed."),
+        "why_dangerous": description.get("why_dangerous", "Could potentially compromise systems or steal sensitive information."),
+        "current_status": classification
+    }
+    
+    # 5. Analyst Findings
+    analyst_findings = {
+        "observed_behavior": description.get("how_attackers_do_it", "No specific behavior observed."),
+        "why_suspicious": "Multiple indicators of compromise were flagged during static and dynamic analysis." if classification != "Safe" else "No suspicious indicators were flagged.",
+        "potential_impact": risk_assessment["business_impact"],
+        "likelihood": risk_assessment["likelihood"]
+    }
+    
+    # 6. Technical Analysis & Conclusion for printable report
+    technical_analysis = f"The artifact was analyzed using the {scan_type} pipeline. The system derived a risk score of {risk_score} mapping to {classification}. Structural features and ML confidence yielded {risk_assessment['confidence_score']}% certainty."
+    conclusion = f"The investigation concludes with a {classification} verdict. Playbooks and recommended actions should be followed accordingly."
+
     return {
         "attack_type": attack_type,
         "attack_description": description,
@@ -89,5 +165,12 @@ def build_analyst_report(scan_type, features, risk_score, classification, osint_
         "risk_assessment": risk_assessment,
         "mitre_mapping": mitre,
         "prevention": prevention,
-        "incident_response": ir
+        "incident_response": ir,
+        "iocs": iocs,
+        "evidence_table": evidence_table,
+        "incident_timeline": incident_timeline,
+        "executive_summary": executive_summary,
+        "analyst_findings": analyst_findings,
+        "technical_analysis": technical_analysis,
+        "conclusion": conclusion
     }

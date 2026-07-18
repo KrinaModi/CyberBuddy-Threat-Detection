@@ -851,6 +851,18 @@ def delete_user(user_id):
     flash(f"User '{user.username}' and their scan history have been deleted.")
     return redirect("/admin/users")
 
+# ── Public information pages (no login required) ──────────────────────────────
+
+@app.route("/about", methods=["GET"])
+def about_page():
+    return render_template("about.html")
+
+@app.route("/how-to-use", methods=["GET"])
+def how_to_use_page():
+    return render_template("how_to_use.html")
+
+# ──────────────────────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     app.run(debug=False)
 

@@ -3,78 +3,856 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About CyberBuddy</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="description" content="About CyberBuddy — an AI-powered cyber threat detection and intelligence platform built for Security Operations Centers. Learn about our technology, modules, and security philosophy.">
+    <title>CyberBuddy SOC | About the Platform</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+        /* ============================================================
+           DESIGN TOKENS — shared across all CyberBuddy pages
+        ============================================================ */
+        :root {
+            --navy-950: #020617;
+            --navy-900: #0f172a;
+            --navy-800: #1e293b;
+            --navy-700: #334155;
+            --slate-500: #64748b;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --white:    #f8fafc;
+            --cyan-500: #06b6d4;
+            --cyan-400: #22d3ee;
+            --cyan-300: #67e8f9;
+            --blue-600: #2563eb;
+            --blue-500: #3b82f6;
+            --blue-400: #60a5fa;
+            --emerald:  #10b981;
+            --rose:     #f43f5e;
+            --amber:    #f59e0b;
+            --violet:   #8b5cf6;
+            --glass-bg: rgba(15, 23, 42, 0.68);
+            --glass-border: rgba(255,255,255,0.07);
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
-        .grid-bg {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
-            background-size: 45px 45px;
-            pointer-events: none;
-            z-index: 0;
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--navy-950);
+            color: var(--white);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Canvas background ── */
+        #cyber-canvas {
+            position: fixed;
+            inset: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+
+        /* ── Ambient glows ── */
+        .ambient-glow {
+            position: fixed; border-radius: 50%;
+            pointer-events: none; z-index: 1; filter: blur(120px);
+        }
+        .ambient-glow-1 {
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(6,182,212,0.05) 0%, transparent 70%);
+            top: -250px; left: -200px;
+        }
+        .ambient-glow-2 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%);
+            bottom: -200px; right: -150px;
+        }
+        .ambient-glow-3 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(139,92,246,0.04) 0%, transparent 70%);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+        }
+
+        /* ── Page wrapper ── */
+        .page-wrapper {
+            position: relative; z-index: 2;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        /* ============================================================
+           TOP BAR
+        ============================================================ */
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.1rem 2.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(2,6,23,0.6);
+            backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .top-bar-brand { display: flex; align-items: center; gap: 0.75rem; }
+        .shield-icon {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2));
+            border: 1px solid rgba(6,182,212,0.3);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--cyan-400);
+        }
+        .brand-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; color: var(--white); }
+        .brand-name span { color: var(--cyan-400); }
+        .brand-tagline { font-size: 0.68rem; font-family: var(--font-mono); color: var(--slate-500); letter-spacing: 0.06em; text-transform: uppercase; }
+        .top-bar-nav { display: flex; align-items: center; gap: 1.5rem; }
+        .top-bar-nav a {
+            font-size: 0.82rem; font-weight: 500;
+            color: var(--slate-400); text-decoration: none; transition: color 0.2s;
+        }
+        .top-bar-nav a:hover { color: var(--white); }
+        .top-bar-nav a.active { color: var(--cyan-400); font-weight: 600; }
+        .nav-cta {
+            display: flex; align-items: center; gap: 0.4rem;
+            padding: 0.45rem 1rem; border-radius: 8px;
+            background: rgba(6,182,212,0.1);
+            border: 1px solid rgba(6,182,212,0.2);
+            color: var(--cyan-400) !important;
+            font-weight: 600 !important; font-size: 0.8rem !important;
+            transition: all 0.2s !important;
+        }
+        .nav-cta:hover { background: rgba(6,182,212,0.18) !important; color: var(--cyan-300) !important; }
+
+        /* ============================================================
+           CB LOGO SVG SIZING
+        ============================================================ */
+        .cb-logo { flex-shrink: 0; display: block; color: var(--cyan-400); }
+        .cb-logo-sm { width: 22px; height: 22px; }
+        .cb-logo-md { width: 30px; height: 30px; }
+        .cb-logo-xl { width: 52px; height: 52px; }
+        .cb-logo-2xl { width: 64px; height: 64px; }
+
+        /* ============================================================
+           REUSABLE LAYOUT UTILITIES
+        ============================================================ */
+        .section {
+            padding: 5rem 2.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .section-label {
+            font-size: 0.72rem; font-family: var(--font-mono);
+            font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--cyan-500);
+            display: flex; align-items: center; gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .section-label::before {
+            content: ''; width: 24px; height: 1px;
+            background: var(--cyan-500); display: block;
+        }
+        .section-title {
+            font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+            font-weight: 800; letter-spacing: -0.03em;
+            line-height: 1.15; color: var(--white);
+            margin-bottom: 1rem;
+        }
+        .section-title span { color: var(--cyan-400); }
+        .section-desc {
+            font-size: 1rem; color: var(--slate-400);
+            line-height: 1.7; max-width: 600px;
         }
         .glass-card {
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
+
+        /* ============================================================
+           HERO SECTION
+        ============================================================ */
+        .hero {
+            padding: 7rem 2.5rem 5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.35rem 0.9rem; border-radius: 100px;
+            background: rgba(6,182,212,0.08);
+            border: 1px solid rgba(6,182,212,0.18);
+            font-size: 0.72rem; font-family: var(--font-mono);
+            font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--cyan-400);
+            margin-bottom: 1.75rem;
+        }
+        .hero-eyebrow::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--cyan-400);
+            animation: dot-pulse 2s ease-in-out infinite;
+        }
+        @keyframes dot-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.5; transform: scale(0.8); }
+        }
+        .hero-title {
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            font-weight: 800; letter-spacing: -0.035em;
+            line-height: 1.1; color: var(--white);
+            margin-bottom: 1.5rem;
+        }
+        .hero-title .accent { color: var(--cyan-400); }
+        .hero-title .accent-blue {
+            background: linear-gradient(90deg, var(--cyan-400), var(--blue-400));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-desc {
+            font-size: 1.05rem; color: var(--slate-400);
+            line-height: 1.75; max-width: 620px; margin-bottom: 2.5rem;
+        }
+        .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            padding: 0.8rem 1.75rem; border-radius: 10px;
+            background: linear-gradient(135deg, var(--cyan-500), var(--blue-500));
+            color: var(--navy-950); font-weight: 700; font-size: 0.9rem;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(6,182,212,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(6,182,212,0.32); }
+        .btn-ghost {
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            padding: 0.8rem 1.5rem; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--slate-300); font-weight: 600; font-size: 0.9rem;
+            text-decoration: none; background: rgba(255,255,255,0.04);
+            transition: all 0.2s;
+        }
+        .btn-ghost:hover { border-color: rgba(6,182,212,0.3); color: var(--white); background: rgba(6,182,212,0.06); }
+
+        /* ── Hero stats row ── */
+        .hero-stats {
+            display: flex; gap: 2.5rem; flex-wrap: wrap;
+            padding-top: 3rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            margin-top: 3rem;
+        }
+        .hero-stat-item {}
+        .hero-stat-value {
+            font-size: 1.8rem; font-weight: 800; letter-spacing: -0.03em;
+            color: var(--white);
+        }
+        .hero-stat-value span { color: var(--cyan-400); }
+        .hero-stat-label { font-size: 0.78rem; color: var(--slate-500); margin-top: 0.2rem; }
+
+        /* ============================================================
+           FEATURE CARDS — 6 Modules
+        ============================================================ */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+        .module-card {
+            background: rgba(10,18,38,0.9);
+            padding: 1.75rem;
+            display: flex; flex-direction: column; gap: 0.75rem;
+            transition: background 0.25s;
+        }
+        .module-card:hover { background: rgba(6,182,212,0.04); }
+        .module-card-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; flex-shrink: 0;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .module-card-icon.cyan    { background: rgba(6,182,212,0.1);  color: var(--cyan-400);  border: 1px solid rgba(6,182,212,0.18); }
+        .module-card-icon.blue    { background: rgba(59,130,246,0.1);  color: var(--blue-400);  border: 1px solid rgba(59,130,246,0.18); }
+        .module-card-icon.emerald { background: rgba(16,185,129,0.1);  color: var(--emerald);   border: 1px solid rgba(16,185,129,0.18); }
+        .module-card-icon.amber   { background: rgba(245,158,11,0.1);  color: var(--amber);     border: 1px solid rgba(245,158,11,0.18); }
+        .module-card-icon.violet  { background: rgba(139,92,246,0.1);  color: var(--violet);    border: 1px solid rgba(139,92,246,0.18); }
+        .module-card-icon.rose    { background: rgba(244,63,94,0.1);   color: var(--rose);      border: 1px solid rgba(244,63,94,0.18); }
+        .module-card:hover .module-card-icon { box-shadow: 0 0 20px currentColor; }
+        .module-card-name { font-size: 1rem; font-weight: 700; color: var(--white); }
+        .module-card-tech {
+            font-size: 0.65rem; font-family: var(--font-mono);
+            font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+            color: var(--slate-500);
+        }
+        .module-card-desc { font-size: 0.8rem; color: var(--slate-400); line-height: 1.6; }
+
+        /* ============================================================
+           AI / ML PIPELINE DIAGRAM
+        ============================================================ */
+        .pipeline-wrap {
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        .pipeline {
+            display: flex; align-items: stretch;
+            gap: 0; min-width: 700px;
+        }
+        .pipeline-step {
+            flex: 1; padding: 1.5rem 1.25rem;
+            background: rgba(10,18,38,0.9);
+            border: 1px solid rgba(255,255,255,0.07);
+            display: flex; flex-direction: column; gap: 0.6rem;
+            position: relative;
+        }
+        .pipeline-step:first-child { border-radius: 14px 0 0 14px; }
+        .pipeline-step:last-child  { border-radius: 0 14px 14px 0; }
+        .pipeline-step + .pipeline-step { border-left: none; }
+        .pipeline-step::after {
+            content: '';
+            position: absolute; right: -12px; top: 50%; transform: translateY(-50%);
+            width: 0; height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 12px solid rgba(6,182,212,0.25);
+            z-index: 2;
+        }
+        .pipeline-step:last-child::after { display: none; }
+        .pipeline-step-num {
+            font-size: 0.65rem; font-family: var(--font-mono);
+            font-weight: 700; color: var(--cyan-500);
+            letter-spacing: 0.08em;
+        }
+        .pipeline-step-icon { font-size: 1.3rem; color: var(--cyan-400); }
+        .pipeline-step-name { font-size: 0.85rem; font-weight: 700; color: var(--white); }
+        .pipeline-step-desc { font-size: 0.72rem; color: var(--slate-500); line-height: 1.5; }
+
+        /* ============================================================
+           TECH STACK BADGES
+        ============================================================ */
+        .tech-grid {
+            display: flex; flex-wrap: wrap; gap: 0.65rem;
+        }
+        .tech-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.45rem 0.9rem; border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.78rem; font-family: var(--font-mono);
+            font-weight: 500; color: var(--slate-300);
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .tech-badge:hover { background: rgba(6,182,212,0.06); border-color: rgba(6,182,212,0.2); color: var(--cyan-300); }
+        .tech-badge i { font-size: 0.85rem; }
+        .tech-badge.python   { color: #ffd859; border-color: rgba(255,216,89,0.15); }
+        .tech-badge.flask    { color: #a7f3d0; border-color: rgba(16,185,129,0.15); }
+        .tech-badge.sklearn  { color: #93c5fd; border-color: rgba(59,130,246,0.15); }
+        .tech-badge.nltk     { color: #c4b5fd; border-color: rgba(139,92,246,0.15); }
+        .tech-badge.sqlite   { color: #6ee7b7; border-color: rgba(16,185,129,0.15); }
+        .tech-badge.cv       { color: #fca5a5; border-color: rgba(244,63,94,0.15); }
+        .tech-badge.ocr      { color: #fdba74; border-color: rgba(245,158,11,0.15); }
+
+        /* ============================================================
+           PHILOSOPHY CARDS
+        ============================================================ */
+        .philosophy-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        .philosophy-card {
+            padding: 1.75rem;
+            border-radius: 14px;
+            background: rgba(10,18,38,0.8);
+            border: 1px solid rgba(255,255,255,0.07);
+            display: flex; gap: 1rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .philosophy-card:hover {
+            border-color: rgba(6,182,212,0.18);
+            background: rgba(6,182,212,0.03);
+        }
+        .philosophy-icon {
+            width: 44px; height: 44px; flex-shrink: 0;
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; background: rgba(6,182,212,0.1);
+            color: var(--cyan-400); border: 1px solid rgba(6,182,212,0.15);
+        }
+        .philosophy-name { font-size: 0.95rem; font-weight: 700; color: var(--white); margin-bottom: 0.4rem; }
+        .philosophy-desc { font-size: 0.8rem; color: var(--slate-400); line-height: 1.65; }
+
+        /* ============================================================
+           SEPARATOR DIVIDER
+        ============================================================ */
+        .section-divider {
+            width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(6,182,212,0.15), transparent);
+            margin: 0 auto;
+        }
+
+        /* ============================================================
+           FOOTER
+        ============================================================ */
+        .page-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 2.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(2,6,23,0.4);
+            font-size: 0.72rem; color: var(--slate-500);
+            flex-wrap: wrap; gap: 0.75rem;
+        }
+        .footer-right { display: flex; gap: 1.5rem; }
+        .footer-right a { color: var(--slate-500); text-decoration: none; transition: color 0.2s; }
+        .footer-right a:hover { color: var(--slate-300); }
+
+        /* ============================================================
+           ANIMATIONS
+        ============================================================ */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+        @media (max-width: 900px) {
+            .modules-grid { grid-template-columns: repeat(2, 1fr); }
+            .philosophy-grid { grid-template-columns: 1fr; }
+            .hero-title { font-size: 2.2rem; }
+        }
+        @media (max-width: 620px) {
+            .top-bar { padding: 0.9rem 1.25rem; }
+            .hero { padding: 4rem 1.25rem 3rem; }
+            .section { padding: 3rem 1.25rem; }
+            .modules-grid { grid-template-columns: 1fr; }
+            .hero-stats { gap: 1.5rem; }
+            .page-footer { flex-direction: column; align-items: center; text-align: center; }
+            .top-bar-nav a:not(.nav-cta) { display: none; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 4px; }
     </style>
 </head>
-<body class="min-h-screen text-slate-200 relative overflow-x-hidden flex flex-col justify-between">
-    <div class="grid-bg"></div>
+<body>
 
-    <!-- NAVBAR -->
-    <header class="w-full relative z-10 border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-2.5">
-                <i class="fa-solid fa-shield-halved text-cyan-400 text-2xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"></i>
-                <span class="font-extrabold text-xl tracking-wider bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">CYBERBUDDY</span>
+    <!-- Animated Background Canvas -->
+    <canvas id="cyber-canvas"></canvas>
+
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+    <div class="ambient-glow ambient-glow-3"></div>
+
+    <div class="page-wrapper">
+
+        <!-- ── TOP BAR ── -->
+        <header class="top-bar">
+            <div class="top-bar-brand">
+                <div class="shield-icon">
+                    <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
+                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
+                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
+                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
+                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
+                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
+                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
+                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="brand-name">Cyber<span>Buddy</span></div>
+                    <div class="brand-tagline">Security Operations Center</div>
+                </div>
             </div>
-            
-            <nav class="flex items-center gap-8 text-sm font-semibold">
-                <a href="/about" class="text-cyan-400 font-bold">About</a>
-                <a href="/how-to-use" class="text-slate-400 hover:text-cyan-400 transition-colors">How to Use</a>
-                <a href="/" class="text-slate-400 hover:text-cyan-400 transition-colors">Home</a>
+            <nav class="top-bar-nav">
+                <a href="/about" class="active">About</a>
+                <a href="/how-to-use">How to Use</a>
+                <a href="/" class="nav-cta">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Login
+                </a>
             </nav>
-        </div>
-    </header>
+        </header>
 
-    <!-- CONTENT -->
-    <main class="relative z-10 flex-1 max-w-7xl mx-auto px-6 py-16 flex flex-col items-center justify-center text-center">
-        <div class="glass-card max-w-xl w-full p-10 rounded-3xl space-y-6 text-left shadow-2xl">
-            <h1 class="text-3xl font-extrabold text-white text-center border-b border-slate-800 pb-4">
-                About <span class="bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">CyberBuddy</span>
+        <!-- ================================================================
+             HERO SECTION
+        ================================================================ -->
+        <div class="hero">
+
+            <div class="hero-eyebrow">AI-Powered SOC Platform</div>
+
+            <h1 class="hero-title">
+                The Intelligence Layer for<br>
+                <span class="accent-blue">Modern Threat Detection</span>
             </h1>
-            
-            <p class="text-slate-300 text-base leading-relaxed">
-                CyberBuddy is an AI-powered phishing detection system designed to identify malicious URLs, emails, and suspicious content instantly.
+
+            <p class="hero-desc">
+                CyberBuddy is an AI-powered cyber threat detection and intelligence platform built
+                for Security Operations Centers. It combines machine learning classification,
+                natural language processing, computer vision, and live OSINT to analyze
+                URLs, emails, screenshots, and QR codes — instantly.
             </p>
-            
-            <p class="text-slate-300 text-base leading-relaxed">
-                It leverages advanced machine learning techniques to provide accurate and real-time predictions, helping analysts and administrators stay safe online. By combining local natural language processing models with real-time remote OSINT database aggregation, CyberBuddy offers a multi-layered security assessment.
-            </p>
-            
-            <div class="pt-4 text-center">
-                <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 font-extrabold rounded-xl transition-all shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Back to Home</span>
+
+            <div class="hero-actions">
+                <a href="/" class="btn-primary">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Access SOC Platform
+                </a>
+                <a href="/how-to-use" class="btn-ghost">
+                    <i class="fa-solid fa-book-open"></i>
+                    How to Use
                 </a>
             </div>
-        </div>
-    </main>
 
-    <!-- FOOTER -->
-    <footer class="w-full relative z-10 border-t border-slate-900 bg-slate-950/20 py-6 text-center text-xs text-slate-500">
-        &copy; 2026 CyberBuddy Threat Intelligence Platform. All rights reserved.
-    </footer>
+            <div class="hero-stats">
+                <div class="hero-stat-item">
+                    <div class="hero-stat-value">6<span>+</span></div>
+                    <div class="hero-stat-label">Detection Modules</div>
+                </div>
+                <div class="hero-stat-item">
+                    <div class="hero-stat-value">5<span>+</span></div>
+                    <div class="hero-stat-label">OSINT Intelligence Sources</div>
+                </div>
+                <div class="hero-stat-item">
+                    <div class="hero-stat-value">20<span>+</span></div>
+                    <div class="hero-stat-label">ML Feature Vectors</div>
+                </div>
+                <div class="hero-stat-item">
+                    <div class="hero-stat-value">100<span>%</span></div>
+                    <div class="hero-stat-label">Local Processing</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             SECURITY MODULES
+        ================================================================ -->
+        <section class="section fade-in-up" id="modules">
+            <div class="section-label">Detection Modules</div>
+            <h2 class="section-title">Six Specialized <span>Analysis Engines</span></h2>
+            <p class="section-desc" style="margin-bottom: 2.5rem;">
+                Every module is purpose-built for a specific indicator type, with its own
+                feature extraction pipeline, classification engine, and OSINT integration layer.
+            </p>
+
+            <div class="modules-grid">
+                <!-- URL Scanner -->
+                <div class="module-card">
+                    <div class="module-card-icon cyan"><i class="fa-solid fa-link"></i></div>
+                    <div class="module-card-name">URL Scanner</div>
+                    <div class="module-card-tech">Random Forest · OSINT · DNS</div>
+                    <div class="module-card-desc">
+                        Extracts 20+ structural, lexical, and behavioral URL features and
+                        classifies them using a trained Random Forest model, cross-validated
+                        against real-time OSINT lookups for threat reputation enrichment.
+                    </div>
+                </div>
+                <!-- Email Analysis -->
+                <div class="module-card">
+                    <div class="module-card-icon blue"><i class="fa-solid fa-envelope-open-text"></i></div>
+                    <div class="module-card-name">Email Analysis</div>
+                    <div class="module-card-tech">NLP · TF-IDF · scikit-learn</div>
+                    <div class="module-card-desc">
+                        Applies NLTK tokenization and TF-IDF vectorization to raw email body text,
+                        then classifies using a trained NLP model to surface phishing language,
+                        social engineering patterns, and urgency manipulation tactics.
+                    </div>
+                </div>
+                <!-- Screenshot OCR -->
+                <div class="module-card">
+                    <div class="module-card-icon emerald"><i class="fa-solid fa-camera"></i></div>
+                    <div class="module-card-name">Screenshot OCR</div>
+                    <div class="module-card-tech">RapidOCR · Computer Vision</div>
+                    <div class="module-card-desc">
+                        Processes uploaded images with RapidOCR to extract embedded text —
+                        URLs, addresses, brand impersonation copy — then routes extracted
+                        indicators through the appropriate classifier pipeline.
+                    </div>
+                </div>
+                <!-- QR Scanner -->
+                <div class="module-card">
+                    <div class="module-card-icon amber"><i class="fa-solid fa-qrcode"></i></div>
+                    <div class="module-card-name">QR Code Scanner</div>
+                    <div class="module-card-tech">OpenCV · Quishing Detection</div>
+                    <div class="module-card-desc">
+                        Decodes QR codes using OpenCV to extract embedded payloads —
+                        typically phishing URLs — and immediately subjects them to the
+                        full URL Scanner pipeline. Defends against QR-based phishing (quishing).
+                    </div>
+                </div>
+                <!-- AI Analyst -->
+                <div class="module-card">
+                    <div class="module-card-icon violet"><i class="fa-solid fa-brain"></i></div>
+                    <div class="module-card-name">AI Analyst</div>
+                    <div class="module-card-tech">LLM · MITRE ATT&amp;CK · Reasoning</div>
+                    <div class="module-card-desc">
+                        Takes structured scan output and generates a human-readable threat
+                        narrative with MITRE ATT&CK technique mapping, attacker intent analysis,
+                        risk severity rating, and recommended analyst actions.
+                    </div>
+                </div>
+                <!-- Report Generator -->
+                <div class="module-card">
+                    <div class="module-card-icon rose"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="module-card-name">Report Generator</div>
+                    <div class="module-card-tech">Structured Output · Compliance</div>
+                    <div class="module-card-desc">
+                        Compiles a complete incident report from any analysis session —
+                        original indicator, timestamps, ML scores, OSINT findings, and the
+                        AI Analyst narrative — formatted for team sharing and compliance records.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             AI + ML PIPELINE DIAGRAM
+        ================================================================ -->
+        <section class="section fade-in-up" id="pipeline">
+            <div class="section-label">Processing Architecture</div>
+            <h2 class="section-title">From Indicator to <span>Intelligence</span></h2>
+            <p class="section-desc" style="margin-bottom: 2.5rem;">
+                Every indicator flows through a structured analysis pipeline.
+                Multiple engines cross-validate findings to reduce false positives and surface high-confidence verdicts.
+            </p>
+
+            <div class="pipeline-wrap">
+                <div class="pipeline">
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">01</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-inbox"></i></div>
+                        <div class="pipeline-step-name">Input</div>
+                        <div class="pipeline-step-desc">URL, email text, screenshot, or QR image submitted by analyst</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">02</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-gears"></i></div>
+                        <div class="pipeline-step-name">Pre-process</div>
+                        <div class="pipeline-step-desc">Normalization, OCR extraction, QR decode, HTML sanitization</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">03</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-vector-square"></i></div>
+                        <div class="pipeline-step-name">Feature Extract</div>
+                        <div class="pipeline-step-desc">20+ URL features, TF-IDF vectors, structural heuristics</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">04</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                        <div class="pipeline-step-name">ML Classify</div>
+                        <div class="pipeline-step-desc">Random Forest / NLP model produces risk probability</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">05</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-globe"></i></div>
+                        <div class="pipeline-step-name">OSINT Enrich</div>
+                        <div class="pipeline-step-desc">Live lookups — reputation, geolocation, WHOIS, blacklists</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">06</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-brain"></i></div>
+                        <div class="pipeline-step-name">AI Narrate</div>
+                        <div class="pipeline-step-desc">LLM produces threat explanation + MITRE ATT&amp;CK mapping</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="pipeline-step-num">07</div>
+                        <div class="pipeline-step-icon"><i class="fa-solid fa-file-lines"></i></div>
+                        <div class="pipeline-step-name">Report</div>
+                        <div class="pipeline-step-desc">Downloadable incident report for compliance and sharing</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             TECHNOLOGY STACK
+        ================================================================ -->
+        <section class="section fade-in-up" id="tech">
+            <div class="section-label">Technology Stack</div>
+            <h2 class="section-title">Built on <span>Production-Grade</span> Tools</h2>
+            <p class="section-desc" style="margin-bottom: 2.5rem;">
+                No experimental dependencies. Every component is a proven, battle-tested library
+                used across the security and data science industries.
+            </p>
+
+            <div class="tech-grid">
+                <div class="tech-badge python">
+                    <i class="fa-brands fa-python"></i>
+                    Python 3
+                </div>
+                <div class="tech-badge flask">
+                    <i class="fa-solid fa-flask"></i>
+                    Flask + Flask-WTF
+                </div>
+                <div class="tech-badge sklearn">
+                    <i class="fa-solid fa-chart-simple"></i>
+                    scikit-learn
+                </div>
+                <div class="tech-badge nltk">
+                    <i class="fa-solid fa-spell-check"></i>
+                    NLTK
+                </div>
+                <div class="tech-badge sqlite">
+                    <i class="fa-solid fa-database"></i>
+                    SQLAlchemy / SQLite
+                </div>
+                <div class="tech-badge cv">
+                    <i class="fa-solid fa-eye"></i>
+                    OpenCV (cv2)
+                </div>
+                <div class="tech-badge ocr">
+                    <i class="fa-solid fa-font"></i>
+                    RapidOCR
+                </div>
+                <div class="tech-badge">
+                    <i class="fa-solid fa-network-wired"></i>
+                    requests + urllib
+                </div>
+                <div class="tech-badge">
+                    <i class="fa-solid fa-user-shield"></i>
+                    Flask-Login
+                </div>
+                <div class="tech-badge">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    Flask-Limiter
+                </div>
+                <div class="tech-badge">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    CSRF Protection
+                </div>
+                <div class="tech-badge">
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                    python-dotenv
+                </div>
+            </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- ================================================================
+             SECURITY PHILOSOPHY
+        ================================================================ -->
+        <section class="section fade-in-up" id="philosophy">
+            <div class="section-label">Security Philosophy</div>
+            <h2 class="section-title">Four Core <span>Principles</span></h2>
+            <p class="section-desc" style="margin-bottom: 2.5rem;">
+                CyberBuddy is designed around the same principles that define enterprise-grade security tooling:
+                transparency, local processing, and zero assumptions about indicator safety.
+            </p>
+
+            <div class="philosophy-grid">
+                <div class="philosophy-card">
+                    <div class="philosophy-icon"><i class="fa-solid fa-server"></i></div>
+                    <div>
+                        <div class="philosophy-name">No External Telemetry</div>
+                        <div class="philosophy-desc">
+                            All ML inference and NLP classification runs locally on your server.
+                            Indicators submitted by analysts are never forwarded to third-party
+                            telemetry endpoints. Your threat data stays in your environment.
+                        </div>
+                    </div>
+                </div>
+                <div class="philosophy-card">
+                    <div class="philosophy-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div>
+                        <div class="philosophy-name">Zero Trust Input</div>
+                        <div class="philosophy-desc">
+                            Every indicator submitted — regardless of source — is treated as
+                            potentially malicious until the analysis pipeline produces a verdict.
+                            No indicator is trusted by default, even from internal sources.
+                        </div>
+                    </div>
+                </div>
+                <div class="philosophy-card">
+                    <div class="philosophy-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                    <div>
+                        <div class="philosophy-name">Transparent Scoring</div>
+                        <div class="philosophy-desc">
+                            Risk scores are never black boxes. Feature contributions, OSINT
+                            findings, and classifier confidence levels are surfaced in the output,
+                            so analysts can understand and challenge every verdict.
+                        </div>
+                    </div>
+                </div>
+                <div class="philosophy-card">
+                    <div class="philosophy-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <div>
+                        <div class="philosophy-name">Defense in Depth</div>
+                        <div class="philosophy-desc">
+                            No single engine makes the final call. ML classification, OSINT
+                            reputation lookups, NLP analysis, and AI reasoning all operate
+                            independently — each cross-validating the others' findings.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================
+             FOOTER
+        ================================================================ -->
+        <footer class="page-footer">
+            <div>&copy; 2026 CyberBuddy Threat Intelligence Platform &middot; All rights reserved</div>
+            <nav class="footer-right">
+                <a href="/about">About</a>
+                <a href="/how-to-use">How to Use</a>
+                <a href="/">Login</a>
+                <a href="/admin">Admin</a>
+            </nav>
+        </footer>
+
+    </div><!-- /page-wrapper -->
+
+    <!-- Canvas Engine -->
+    <script src="/static/cyber-canvas.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        CyberBuddyMap.init('cyber-canvas', { maxArcs: 3, arcSpeed: 0.5, nodeSize: 2.5 });
+    });
+    </script>
+
+    <!-- Scroll-triggered fade-in animations -->
+    <script>
+    (function () {
+        'use strict';
+        if (!('IntersectionObserver' in window)) return;
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+        document.querySelectorAll('.fade-in-up').forEach(function (el) {
+            observer.observe(el);
+        });
+    }());
+    </script>
+
 </body>
 </html>
