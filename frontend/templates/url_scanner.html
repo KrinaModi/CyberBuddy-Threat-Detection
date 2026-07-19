@@ -19,7 +19,7 @@
                     <h2 class="text-lg font-bold text-slate-200">Domain Indicator Input</h2>
                 </div>
                 
-                <form action="/analyze" method="POST" class="space-y-4">
+                <form id="scan-form" action="/analyze" method="POST" class="space-y-4">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="scan_type" value="URL">
                     <div class="relative">
@@ -145,4 +145,72 @@
         </div>
     </div>
 </div>
+
+{% if result and domain_info and domain_info.lat and domain_info.lon %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var targetLat = {{ domain_info.lat }};
+        var targetLon = {{ domain_info.lon }};
+        var classification = "{{ classification }}";
+        var severity = 'low';
+        if (classification === 'Malicious' || classification === 'High Risk') severity = 'critical';
+        else if (classification === 'Suspicious' || classification === 'Low Risk') severity = 'medium';
+        
+        if (window.CyberBuddyMap) {
+            // Restore final verdict state instantly on page load
+            CyberBuddyMap.startInvestigation(targetLat, targetLon);
+            setTimeout(function() {
+                CyberBuddyMap.resolveInvestigation(severity);
+            }, 50);
+        }
+    });
+</script>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.getElementById('scan-form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (window.CyberBuddyMap) {
+                    e.preventDefault();
+                    var btn = form.querySelector('button[type="submit"]');
+                    var originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Analyzing...</span>';
+                    btn.disabled = true;
+                    
+                    var fakeLat = 30 + Math.random() * 20;
+                    var fakeLon = -100 + Math.random() * 50;
+                    CyberBuddyMap.startInvestigation(fakeLat, fakeLon);
+                    
+                    var startTime = Date.now();
+                    
+                    fetch(form.action, {
+                        method: form.method,
+                        body: new FormData(form)
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        var elapsed = Date.now() - startTime;
+                        var minDuration = 3500; // guarantee full visual cycle
+                        var delay = Math.max(0, minDuration - elapsed);
+                        
+                        setTimeout(function() {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                        }, delay);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                        CyberBuddyMap.resolveInvestigation('low'); // reset
+                    });
+                }
+            });
+        }
+    });
+</script>
+
 {% endblock %}

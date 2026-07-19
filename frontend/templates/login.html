@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CyberBuddy SOC – AI-Powered Cyber Threat Detection & Intelligence Platform. Detect threats, analyze attacks, and generate intelligent security reports.">
-    <title>CyberBuddy SOC | Security Operations Center</title>
+    <title>CyberBuddy SOC — Sign In to Your Operations Center</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon -->
+    
 
     <style>
         /* ============================================================
@@ -109,9 +111,9 @@
             justify-content: space-between;
             padding: 1.25rem 2rem;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            background: rgba(2, 6, 23, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .top-bar-brand {
@@ -1018,15 +1020,13 @@
            CB LOGO MARK – Digital Eye + Hexagonal Iris
            currentColor inherits from parent — works in any context.
         ============================================================ */
-        .cb-logo {
             flex-shrink: 0;
             display: block;
             color: var(--cyan-400);
         }
-        .cb-logo-sm { width: 22px; height: 22px; }
-        .cb-logo-md { width: 30px; height: 30px; }
-        .cb-logo-lg { width: 40px; height: 40px; }
-        .cb-logo-xl { width: 52px; height: 52px; }
+
+
+
 
         /* ============================================================
            EXPLORE MODULES MODAL
@@ -1216,6 +1216,28 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
             50%       { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
         }
+    
+        /* Overrides for Final V1 Polish */
+        .center-brand-name {
+            font-size: 2rem !important; /* Reduced to make map the hero */
+            letter-spacing: 0.15em !important;
+        }
+        .center-brand-subtitle {
+            font-size: 0.75rem !important;
+        }
+        .center-brand-tagline {
+            font-size: 0.65rem !important;
+            opacity: 0.6 !important;
+        }
+        .main-grid {
+            /* ensure nothing blocks the background */
+            background: transparent !important;
+        }
+        body {
+            /* slightly darker base to let oceans pop in canvas */
+            background: #020617 !important;
+        }
+
     </style>
 </head>
 <body>
@@ -1235,27 +1257,26 @@
 
         <!-- ── TOP BAR ── -->
         <header class="top-bar">
-            <div class="top-bar-brand">
-                <div class="shield-icon">
-                    <!-- CB Logo: Digital Eye + Hexagonal Iris -->
-                    <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
-                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
-                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="brand-name">Cyber<span>Buddy</span></div>
-                    <div class="brand-version">SOC Platform · v3.2</div>
+            <div class="top-bar-brand" style="display:flex; align-items:center; gap: 0.75rem;">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                  <defs>
+                    <mask id="global-cb-mask">
+                      <rect width="100" height="100" fill="white" />
+                      <rect x="0" y="48" width="100" height="4" fill="black" />
+                      <line x1="56" y1="16" x2="84" y2="44" stroke="black" stroke-width="4" stroke-linecap="round" />
+                      <line x1="56" y1="84" x2="84" y2="56" stroke="black" stroke-width="4" stroke-linecap="round" />
+                      <polygon points="50,42 58,50 50,58 42,50" fill="white" stroke="black" stroke-width="4" stroke-linejoin="round" />
+                    </mask>
+                  </defs>
+                  <g mask="url(#global-cb-mask)">
+                    <polygon points="50,10 82,42 42,42 42,58 82,58 50,90 10,50" fill="#ffffff" />
+                    <polygon points="90,50 58,18 58,82" fill="#2F7CFF" />
+                    <polygon points="50,42 58,50 50,58 42,50" fill="#3DD8FF" />
+                  </g>
+                </svg>
+                <div style="display:flex; flex-direction:column; justify-content:center;">
+                    <div class="brand-name" style="font-family:'Inter', sans-serif; font-weight:800; font-size:1.4rem; letter-spacing:-0.03em; line-height:1;">CyberBuddy</div>
+                    <div class="brand-version" style="font-family:'Inter', sans-serif; font-weight:600; font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase; color:#94a3b8; margin-top:2px;">AI Cyber Investigation Platform</div>
                 </div>
             </div>
             <div class="top-bar-status">
@@ -1283,8 +1304,7 @@
                         Detection & Intelligence
                     </h1>
                     <p class="hero-subtitle">
-                        Detect threats. Analyze attacks. Generate intelligent security reports.
-                        Enterprise-grade protection powered by machine learning.
+                        Every Threat. Investigated. Explained.
                     </p>
                 </div>
 
@@ -1385,27 +1405,17 @@
 
                 <!-- Brand Hero -->
                 <div class="center-brand">
-                    <div class="center-logo">
-                        <!-- CB Logo: Digital Eye + Hexagonal Iris -->
-                        <svg class="cb-logo cb-logo-xl" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
-                            <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                            <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                            <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                            <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
-                            <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                            <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                            <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                            <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                            <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                            <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                            <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                            <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                        </svg>
-                    </div>
-                    <div class="center-brand-name">Cyber<span>Buddy</span></div>
-                    <div class="center-brand-subtitle">Security Operations Center</div>
-                    <div class="center-brand-tagline">
-                        AI-Powered Cyber Threat Detection &amp; Intelligence Platform
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="72" height="72" style="margin-bottom: 1.5rem; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));">
+                      <use href="#global-cb-mask" /> <!-- Mask defined above in top-bar -->
+                      <g mask="url(#global-cb-mask)">
+                        <polygon points="50,10 82,42 42,42 42,58 82,58 50,90 10,50" fill="#ffffff" />
+                        <polygon points="90,50 58,18 58,82" fill="#2F7CFF" />
+                        <polygon points="50,42 58,50 50,58 42,50" fill="#3DD8FF" />
+                      </g>
+                    </svg>
+                    <div class="center-brand-name" style="font-family:'Inter', sans-serif; font-weight:800; font-size:2.8rem; letter-spacing:-0.03em; color:#ffffff;">CyberBuddy</div>
+                    <div class="center-brand-tagline" style="font-family:'Inter', sans-serif; font-weight:600; font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:#94a3b8; margin-top:10px;">
+                        AI Cyber Investigation Platform
                     </div>
                 </div>
 
@@ -1474,15 +1484,8 @@
 
                         <!-- Primary CTA: Login -->
                         <button type="submit" id="login-btn" class="btn-login">
-                            <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                                <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                                <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                                <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
-                                <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                                <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                            </svg>
-                            <span>Login to SOC Platform</span>
+                            <span class="font-extrabold text-2xl tracking-widest text-slate-100 drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">CYBERBUDDY</span>
+                            <span>Access SOC Platform</span>
                             <i class="fa-solid fa-arrow-right" style="font-size:0.8rem;"></i>
                         </button>
                     </form>
@@ -1661,14 +1664,7 @@
         <div class="mod-panel">
             <div class="mod-header">
                 <div class="mod-header-brand">
-                    <svg class="cb-logo cb-logo-md" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
-                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                    </svg>
+                    <span class="font-extrabold text-2xl tracking-widest text-slate-100 drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">CYBERBUDDY</span>
                     <div class="mod-header-text">
                         <div id="mod-modal-title" class="mod-title">Security Modules</div>
                         <div class="mod-subtitle">CyberBuddy SOC Platform &middot; All Modules</div>
@@ -1823,9 +1819,9 @@
 
     <!-- ================================================================
          CANVAS ENGINE — Geo Intelligence World Map
-         Powered by /static/cyber-canvas.js (shared across all pages)
+         Powered by /static/cyber-canvas.js?v=7 (shared across all pages)
     ================================================================ -->
-    <script src="/static/cyber-canvas.js"></script>
+    <script src="/static/cyber-canvas.js?v=7"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         CyberBuddyMap.init('cyber-canvas', { maxArcs: 5, arcSpeed: 0.7, nodeSize: 3 });

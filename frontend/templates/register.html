@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create your CyberBuddy analyst account and gain access to the AI-powered Security Operations Center platform.">
-    <title>CyberBuddy SOC | Request Access</title>
+    <title>CyberBuddy SOC — Request Analyst Access</title>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon -->
+    
 
     <style>
         /* ============================================================
@@ -176,9 +178,8 @@
         }
 
         /* CB Logo SVG sizing */
-        .cb-logo { flex-shrink: 0; display: block; color: var(--cyan-400); }
-        .cb-logo-sm { width: 22px; height: 22px; }
-        .cb-logo-xl { width: 52px; height: 52px; }
+
+
 
         /* ── Brand hero above card ── */
         .reg-brand {
@@ -438,22 +439,9 @@
         <!-- ── TOP BAR ── -->
         <header class="top-bar">
             <div class="top-bar-brand">
-                <div class="shield-icon">
-                    <!-- CB Logo: Digital Eye + Hexagonal Iris -->
-                    <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
-                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
-                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                    </svg>
+                <div class="shield-icon" style="background:transparent; border:none; box-shadow:none; width:auto; height:auto;">
+                    <!-- Hexagonal circuit eye logo mark -->
+                    
                 </div>
                 <div>
                     <div class="brand-name">Cyber<span>Buddy</span></div>
@@ -475,31 +463,19 @@
 
             <!-- Brand Hero -->
             <div class="reg-brand">
-                <div class="reg-logo-wrap">
-                    <svg class="cb-logo cb-logo-xl" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CyberBuddy">
-                        <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                        <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                        <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                        <line x1="15" y1="22" x2="29" y2="22" stroke="currentColor" stroke-width="0.7" opacity="0.5"/>
-                        <circle cx="4" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                        <line x1="1.5" y1="19" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <line x1="1.5" y1="25" x2="4" y2="22" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <circle cx="40" cy="22" r="1.8" fill="currentColor" opacity="0.8"/>
-                        <line x1="40" y1="22" x2="42.5" y2="19" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <line x1="40" y1="22" x2="42.5" y2="25" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-                        <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                        <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                    </svg>
+                <div class="reg-logo-wrap" style="background:transparent; border:none; box-shadow:none; width:auto; height:auto; margin-bottom:0.5rem;">
+                    <!-- Hexagonal circuit eye logo mark -->
+                    
                 </div>
                 <div class="reg-brand-name">Cyber<span>Buddy</span></div>
-                <div class="reg-brand-subtitle">Request Analyst Access</div>
+                <div class="reg-brand-subtitle">Request Access to the Platform</div>
             </div>
 
             <!-- Registration Card -->
             <div class="auth-card">
                 <div class="auth-card-header">
                     <div class="auth-card-title">Create Analyst Account</div>
-                    <div class="auth-card-subtitle">Pending admin approval &middot; All fields required</div>
+                    <div class="auth-card-subtitle">Create Account &rarr; Verify &rarr; Access SOC</div>
                 </div>
 
                 <!-- Flask message (registration errors / feedback) -->
@@ -590,14 +566,8 @@
 
                     <!-- Submit -->
                     <button type="submit" id="register-btn" class="btn-register">
-                        <svg class="cb-logo cb-logo-sm" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path d="M4,22 C4,8 40,8 40,22 C40,36 4,36 4,22Z" stroke="currentColor" stroke-width="1.6"/>
-                            <polygon points="22,14 29,18 29,26 22,30 15,26 15,18" stroke="currentColor" stroke-width="1.2"/>
-                            <circle cx="22" cy="22" r="3.5" fill="currentColor"/>
-                            <circle cx="22" cy="14" r="1.4" fill="currentColor" opacity="0.7"/>
-                            <circle cx="22" cy="30" r="1.4" fill="currentColor" opacity="0.7"/>
-                        </svg>
-                        <span>Request Access</span>
+                        <span class="font-extrabold text-2xl tracking-widest text-slate-100 drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">CYBERBUDDY</span>
+                        <span>Create Analyst Account</span>
                         <i class="fa-solid fa-arrow-right" style="font-size:0.8rem;"></i>
                     </button>
                 </form>
@@ -628,7 +598,7 @@
     </div><!-- /page-wrapper -->
 
     <!-- Canvas Engine (shared across all pages) -->
-    <script src="/static/cyber-canvas.js"></script>
+    <script src="/static/cyber-canvas.js?v=7"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         CyberBuddyMap.init('cyber-canvas', { maxArcs: 3, arcSpeed: 0.5, nodeSize: 2.5 });

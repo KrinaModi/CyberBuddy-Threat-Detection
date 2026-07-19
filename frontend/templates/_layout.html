@@ -72,16 +72,36 @@
     </style>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="h-full font-sans text-slate-200 antialiased flex">
+<body class="h-full font-sans text-slate-200 antialiased flex relative">
+    
+    <!-- GLOBAL INTELLIGENCE CANVAS (Investigation Visualization) -->
+    <canvas id="cyber-canvas" style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;"></canvas>
 
-    <!-- SIDEBAR -->
-    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-950/80 backdrop-blur-xl border-r border-slate-800/80 flex flex-col relative z-10 shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
         <div>
-            <!-- Sidebar Header -->
-            <div class="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
-                <i class="fa-solid fa-shield-halved text-cyan-400 text-2xl drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"></i>
-                <span class="font-bold text-lg tracking-wider bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">CYBERBUDDY</span>
-                <span class="text-[9px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest border border-cyan-500/20">SOC</span>
+            <!-- Sidebar Header (Wordmark) -->
+            <div class="h-20 flex items-center px-5 border-b border-slate-800 gap-3 bg-gradient-to-b from-slate-900/50 to-transparent">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="32" height="32" class="flex-shrink-0">
+                  <defs>
+                    <mask id="layout-cb-mask">
+                      <rect width="100" height="100" fill="white" />
+                      <rect x="0" y="48" width="100" height="4" fill="black" />
+                      <line x1="56" y1="16" x2="84" y2="44" stroke="black" stroke-width="4" stroke-linecap="round" />
+                      <line x1="56" y1="84" x2="84" y2="56" stroke="black" stroke-width="4" stroke-linecap="round" />
+                      <polygon points="50,42 58,50 50,58 42,50" fill="white" stroke="black" stroke-width="4" stroke-linejoin="round" />
+                    </mask>
+                  </defs>
+                  <g mask="url(#layout-cb-mask)">
+                    <polygon points="50,10 82,42 42,42 42,58 82,58 50,90 10,50" fill="#ffffff" />
+                    <polygon points="90,50 58,18 58,82" fill="#2F7CFF" />
+                    <polygon points="50,42 58,50 50,58 42,50" fill="#3DD8FF" />
+                  </g>
+                </svg>
+                <div class="flex flex-col justify-center">
+                    <span style="font-family:'Inter', sans-serif; font-weight:800; font-size:1.15rem; letter-spacing:-0.03em; color:#ffffff; line-height:1.2;">CyberBuddy</span>
+                    <span style="font-family:'Inter', sans-serif; font-weight:600; font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase; color:#3DD8FF; margin-top:2px;">SOC Platform</span>
+                </div>
             </div>
 
             <!-- Navigation Links -->
@@ -178,7 +198,7 @@
     </aside>
 
     <!-- MAIN APP WRAPPER -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
         
         <!-- HEADER -->
         <header class="h-16 border-b border-slate-800 bg-slate-900/30 backdrop-blur flex items-center justify-between px-8 shrink-0">
@@ -214,5 +234,14 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+
+    <!-- CANVAS ENGINE -->
+    <script src="/static/cyber-canvas.js?v=7"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize canvas but wait for explicit investigation triggers
+            CyberBuddyMap.init('cyber-canvas', { maxArcs: 5, arcSpeed: 0.7, nodeSize: 3 });
+        });
+    </script>
 </body>
 </html>

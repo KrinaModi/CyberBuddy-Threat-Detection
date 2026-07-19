@@ -51,12 +51,14 @@ def get_ip_geolocation(ip):
                 return {
                     "country": data.get("country", "Unknown"),
                     "isp": data.get("isp", "Unknown"),
-                    "city": data.get("city", "Unknown")
+                    "city": data.get("city", "Unknown"),
+                    "lat": data.get("lat"),
+                    "lon": data.get("lon")
                 }
     except Exception:
         pass
     
-    return {"country": "Unknown", "isp": "Unknown"}
+    return {"country": "Unknown", "isp": "Unknown", "lat": None, "lon": None}
 
 def calculate_entropy(text):
     """
@@ -313,7 +315,9 @@ def scan_url_osint(url):
         "ip": ip or "Not resolved",
         "registrar": registrar,
         "country": geo.get("country", "Unknown"),
-        "isp": geo.get("isp", "Unknown")
+        "isp": geo.get("isp", "Unknown"),
+        "lat": geo.get("lat"),
+        "lon": geo.get("lon")
     }
     
     return {
