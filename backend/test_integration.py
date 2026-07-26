@@ -136,3 +136,12 @@ def test_full_flow(client):
     assert ss_data['status'] == 'SUCCESS'
     assert ss_data['scam_verdict'] in ['SAFE', 'LOW RISK', 'SUSPICIOUS', 'HIGH RISK', 'MALICIOUS']
     assert 'ai_critique' in ss_data
+
+    # 14. Email Address Scan (Ensure emails are NOT classified as URLs)
+    response = client.post('/scan', json={
+        'input': 'analyst.support@cyberbuddy-threat-intel.org'
+    })
+    assert response.status_code == 200
+    email_data = response.get_json()
+    assert email_data['scan_type'] == 'EMAIL'
+

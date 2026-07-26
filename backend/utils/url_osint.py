@@ -1,12 +1,18 @@
 import socket
 import requests
 import math
+import logging
+import os
+import time
 from collections import Counter
 from datetime import datetime
 from urllib.parse import urlparse
 from utils.scoring import get_threat_classification
 
-import os
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
 # Use the same VT API key from url_scanner.py (or fallback)
 API_KEY = os.environ.get("VIRUSTOTAL_API_KEY", "8f600656464cc1b095265dc2f56de64805f013e40a2c254e7f99ee02d56ec1af")
 
@@ -22,28 +28,35 @@ def extract_domain(url):
         if ':' in domain:
             domain = domain.split(':')[0]
         return domain
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error parsing domain from URL {url}: {e}")
         return ""
 
 def get_dns_records(domain):
     """
     Resolve IP address of the domain.
     """
+    if not domain:
+        return None
     try:
         ip = socket.gethostbyname(domain)
         return ip
-    except Exception:
+    except socket.gaierror as e:
+        logger.warning(f"DNS lookup failed for domain {domain}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected DNS error for domain {domain}: {e}")
         return None
 
 def get_ip_geolocation(ip):
     """
     Get geolocation details of the IP address.
     """
-    if not ip or ip.startswith(('127.', '192.168.', '10.')):
-        return {"country": "Localhost / Private Network", "isp": "Internal"}
+    if not ip or ip.startswith(('127.', '192.168.', '10.', '172.16.', '169.254.')):
+        return {"country": "Localhost / Private Network", "isp": "Internal", "city": "Internal"}
         
     try:
-        # Use free ip-api.com service
+        # Use free ip-api.com service with a robust timeout
         res = requests.get(f"http://ip-api.com/json/{ip}", timeout=3)
         if res.status_code == 200:
             data = res.json()
@@ -53,10 +66,16 @@ def get_ip_geolocation(ip):
                     "isp": data.get("isp", "Unknown"),
                     "city": data.get("city", "Unknown")
                 }
-    except Exception:
-        pass
+            else:
+                logger.warning(f"ip-api returned unsuccessful status for IP {ip}: {data.get('message')}")
+        else:
+            logger.warning(f"ip-api returned status code {res.status_code} for IP {ip}")
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"Geolocation API request failed for IP {ip}: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error in geolocation query for IP {ip}: {e}")
     
-    return {"country": "Unknown", "isp": "Unknown"}
+    return {"country": "Unknown", "isp": "Unknown", "city": "Unknown"}
 
 def calculate_entropy(text):
     """
@@ -86,6 +105,9 @@ def get_registrar_and_registration_rdap(domain):
     """
     registrar = "Unknown Registrar"
     created_date = None
+    if not domain:
+        return registrar, created_date
+
     try:
         res = requests.get(f"https://rdap.org/domain/{domain}", timeout=3)
         if res.status_code == 200:
@@ -93,17 +115,24 @@ def get_registrar_and_registration_rdap(domain):
             # Find registrar name
             for entity in data.get("entities", []):
                 if "registrar" in entity.get("roles", []):
-                    for vcard in entity.get("vcardArray", [None, []])[1]:
-                        if vcard[0] == "fn":
-                            registrar = vcard[3]
-                            break
+                    vcard_array = entity.get("vcardArray")
+                    if vcard_array and len(vcard_array) > 1:
+                        for vcard in vcard_array[1]:
+                            if vcard and len(vcard) > 3 and vcard[0] == "fn":
+                                registrar = vcard[3]
+                                break
             # Find registration date
             for event in data.get("events", []):
                 if event.get("eventAction") == "registration":
                     created_date = event.get("eventDate")
                     break
-    except Exception:
-        pass
+        else:
+            logger.warning(f"RDAP query returned status code {res.status_code} for domain {domain}")
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"RDAP query failed for domain {domain}: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error in RDAP query for domain {domain}: {e}")
+        
     return registrar, created_date
 
 def calculate_domain_age_days(created_date_str):
@@ -114,20 +143,23 @@ def calculate_domain_age_days(created_date_str):
         return None
     try:
         from datetime import timezone
-        # standard ISO format date extraction (e.g. 2023-01-24T18:20:00Z)
-        # extract the first 10 characters (YYYY-MM-DD)
+        # Standard ISO format date extraction (e.g. 2023-01-24T18:20:00Z)
+        # Extract the first 10 characters (YYYY-MM-DD)
         date_part = created_date_str[:10]
         created_dt = datetime.strptime(date_part, "%Y-%m-%d")
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         age_days = (now - created_dt).days
         return age_days
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to parse creation date string '{created_date_str}': {e}")
         return None
 
 def extract_sld(domain):
     """
     Extracts the second-level domain (SLD) from a domain name.
     """
+    if not domain:
+        return ""
     parts = domain.split('.')
     if len(parts) >= 2:
         if parts[-2] in ('co', 'com', 'org', 'net', 'gov', 'edu', 'mil') and len(parts) >= 3:
@@ -146,36 +178,42 @@ def query_virustotal(url):
     """
     headers = {"x-apikey": API_KEY}
     try:
-        # Step 1: Submit URL/Get report
-        response = requests.post(
-            "https://www.virustotal.com/api/v3/urls",
-            headers=headers,
-            data={"url": url},
-            timeout=5
-        )
-        if response.status_code == 200:
-            analysis_id = response.json()["data"]["id"]
-            # Query the analysis (sometimes we need to poll, let's wait 1.5s or just try to retrieve)
-            import time
-            time.sleep(1.5)
-            report = requests.get(
-                f"https://www.virustotal.com/api/v3/analyses/{analysis_id}",
+        if API_KEY and "your-api-key" not in API_KEY:
+            # Step 1: Submit URL/Get report
+            response = requests.post(
+                "https://www.virustotal.com/api/v3/urls",
                 headers=headers,
+                data={"url": url},
                 timeout=5
             )
-            if report.status_code == 200:
-                stats = report.json()["data"]["attributes"]["stats"]
-                return {
-                    "malicious_hits": stats.get("malicious", 0),
-                    "suspicious_hits": stats.get("suspicious", 0),
-                    "harmless_hits": stats.get("harmless", 0)
-                }
+            if response.status_code == 200:
+                analysis_id = response.json()["data"]["id"]
+                # Query the analysis (wait 1.5s to allow processing)
+                time.sleep(1.5)
+                report = requests.get(
+                    f"https://www.virustotal.com/api/v3/analyses/{analysis_id}",
+                    headers=headers,
+                    timeout=5
+                )
+                if report.status_code == 200:
+                    stats = report.json()["data"]["attributes"]["stats"]
+                    return {
+                        "malicious_hits": stats.get("malicious", 0),
+                        "suspicious_hits": stats.get("suspicious", 0),
+                        "harmless_hits": stats.get("harmless", 0)
+                    }
+                else:
+                    logger.warning(f"VirusTotal analysis fetch returned status {report.status_code}")
+            else:
+                logger.warning(f"VirusTotal URL submission returned status {response.status_code}")
     except Exception as e:
-        print("VirusTotal query error:", e)
+        logger.error(f"VirusTotal query error: {e}")
     
-    # Fallback mock hits if request fails or API key is limit exceeded
+    # Fallback mock hits if request fails, API key is missing or limit is exceeded
     # Generate realistic mocks based on whether the URL domain looks suspicious
     domain = extract_domain(url).lower()
+    logger.info(f"Using mock fallback reputation for domain: {domain}")
+    
     suspicious_keywords = ["paypal", "bank", "login", "verify", "secure", "free", "win", "update", "signin"]
     is_suspicious = any(kw in domain for kw in suspicious_keywords) or len(domain) > 30
     
@@ -228,7 +266,6 @@ def scan_url_osint(url):
         
     # 5. Suspicious Brand Keywords (lookalikes)
     suspicious_keywords = ["paypal", "bank", "login", "verify", "secure", "free", "win", "update", "signin", "netflix", "microsoft", "apple", "support", "credential"]
-    # Check if keyword is in domain but it is NOT the official domain
     has_suspicious_kw = False
     for kw in suspicious_keywords:
         if kw in domain:
@@ -321,4 +358,3 @@ def scan_url_osint(url):
         "domain_info": domain_info,
         "vt_data": vt_result
     }
-

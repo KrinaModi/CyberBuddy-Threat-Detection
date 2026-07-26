@@ -1,7 +1,9 @@
 import os
+import sys
 import joblib
 import pandas as pd
 import nltk
+import logging
 from flask import Flask, render_template, request, redirect, session, jsonify, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -11,7 +13,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from models import db, User, ScanHistory
-from utils.preprocessing import clean_text
+from preprocessing.email_preprocessor import preprocess_email
 from utils.features import extract_features
 from utils.email_nlp import EmailNLPScanner
 from utils.url_osint import scan_url_osint
@@ -20,9 +22,11 @@ from utils.explanation import generate_threat_explanation
 from utils.ai_assistant import generate_ai_analysis
 from datetime import datetime
 
+# Set up logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
-
 
 # NLTK initialization
 try:
@@ -69,7 +73,7 @@ def seed_users():
             role="admin"
         )
         db.session.add(admin)
-        print("Seeded admin account.")
+        logger.info("Seeded admin account.")
 
     # Seed demo user if not exists
     demo = User.query.filter_by(username='demo').first()
@@ -82,12 +86,11 @@ def seed_users():
             role="user"
         )
         db.session.add(demo)
-        print("Seeded demo account.")
+        logger.info("Seeded demo account.")
 
     db.session.commit()
 
 # Safe database initialization (Apply expanded schema without losing data)
-import sys
 if "pytest" not in sys.modules and "PYTEST_CURRENT_TEST" not in os.environ:
     with app.app_context():
         db_dir = os.path.join(app.instance_path)
@@ -107,9 +110,9 @@ if "pytest" not in sys.modules and "PYTEST_CURRENT_TEST" not in os.environ:
                 import time
                 backup_file = db_file + f".bak_{int(time.time())}"
                 os.rename(db_file, backup_file)
-                print(f"Backed up old SQLite database to {backup_file} and applying new schema.")
+                logger.info(f"Backed up old SQLite database to {backup_file} and applying new schema.")
             except Exception as e:
-                print("Failed to backup old database:", e)
+                logger.error(f"Failed to backup old database: {e}")
         else:
             os.makedirs(db_dir, exist_ok=True)
 
@@ -123,7 +126,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 try:
     email_scanner = EmailNLPScanner()
 except Exception as e:
-    print(f"Error initializing EmailNLPScanner: {e}")
+    logger.error(f"Error initializing EmailNLPScanner: {e}")
     email_scanner = None
 
 
@@ -132,7 +135,7 @@ def send_otp_email(to_email, otp):
     smtp_password = os.environ.get("SMTP_PASSWORD")
     
     if not smtp_email or not smtp_password or "your-gmail-here" in smtp_email:
-        print("[WARNING] SMTP credentials not fully configured in .env. Falling back to console log.")
+        logger.warning("SMTP credentials not fully configured in .env. Falling back to console log.")
         return False
         
     try:
@@ -247,10 +250,10 @@ CyberBuddy Security Team"""
         server.sendmail(smtp_email, to_email, msg.as_string())
         server.quit()
         
-        print(f"[SUCCESS] OTP email successfully sent to {to_email}")
+        logger.info(f"OTP email successfully sent to {to_email}")
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to send OTP email to {to_email}: {e}")
+        logger.error(f"Failed to send OTP email to {to_email}: {e}")
         return False
 
 
@@ -344,7 +347,6 @@ def forgot_password():
     if request.method == "POST":
         username = request.form["username"].strip()
         email = request.form["email"].strip()
-        new_password = request.form.get("new_password", "") # Original app used new_password directly but it was a flaw.
 
         user = User.query.filter_by(username=username, email=email).first()
 
@@ -384,7 +386,7 @@ def forgot_password():
                 server.quit()
                 email_sent = True
             except Exception as e:
-                print(f"[ERROR] Failed to send reset email: {e}")
+                logger.error(f"Failed to send reset email: {e}")
                 
         if email_sent:
             flash("A temporary password has been sent to your email address.")
@@ -417,14 +419,42 @@ def dashboard():
         recent_scans=recent_scans
     )
 
-def evaluate_threat(text):
-    # Determine if input is a URL
-    cleaned_input = text.strip()
-    is_url = cleaned_input.lower().startswith(("http://", "https://", "www.")) or (
-        "." in cleaned_input.split("/")[0] and len(cleaned_input.split("/")[0]) > 3
-    )
+def is_input_url(text):
+    """
+    Helper function to robustly distinguish between URLs/domains and emails/sentences.
+    """
+    cleaned = text.strip()
     
-    if is_url:
+    # 1. If it starts with common URL protocols or www. prefix, it is a URL
+    if cleaned.lower().startswith(("http://", "https://", "www.")):
+        return True
+        
+    # 2. If it contains '@', it is likely an email address or email content
+    # (except for authenticated URLs like http://user@domain.com, which are matched in step 1)
+    if "@" in cleaned:
+        return False
+        
+    # 3. For raw domains, hostnames, or IP addresses:
+    # Split by '/' to analyze the main address part
+    parts = cleaned.split("/")
+    first_part = parts[0]
+    
+    # Check if the first part looks like a domain name or IP address
+    if "." in first_part and " " not in first_part and len(first_part) > 3:
+        # Check if it contains letters (domain name)
+        if any(c.isalpha() for c in first_part):
+            return True
+        # Check if it is a valid IPv4 address
+        parts_ip = first_part.split(".")
+        if len(parts_ip) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts_ip):
+            return True
+            
+    return False
+
+def evaluate_threat(text):
+    cleaned_input = text.strip()
+    
+    if is_input_url(cleaned_input):
         osint = scan_url_osint(cleaned_input)
         features = osint["features"]
         domain_info = osint["domain_info"]
@@ -444,7 +474,11 @@ def evaluate_threat(text):
     else:
         # Email NLP Engine
         nlp = email_scanner.analyze(cleaned_input)
-        features = extract_features(clean_text(cleaned_input), original_text=cleaned_input)
+        
+        # Remove duplicate preprocessing by using preprocess_email() exclusively
+        cleaned_email = preprocess_email(cleaned_input)
+        features = extract_features(cleaned_email, original_text=cleaned_input)
+        
         explanation = generate_threat_explanation(
             scan_type="EMAIL",
             risk_score=nlp["risk_score"],
@@ -576,6 +610,7 @@ def scan():
             "explanation": analysis["threat_explanation"]
         })
     except Exception as e:
+        logger.error(f"Error in API /scan: {e}")
         return jsonify({
             "result": "ERROR",
             "risk": 0,
@@ -704,6 +739,7 @@ def screenshot_detector():
                 "reasons": reasons
             })
         except Exception as e:
+            logger.error(f"Error in screenshot detector: {e}")
             return jsonify({"status": "ERROR", "message": str(e)})
             
     return render_template("screenshot_detector.html")
@@ -797,7 +833,6 @@ def delete_user(user_id):
         
     # Delete scans associated with this user
     ScanHistory.query.filter_by(user_id=user_id).delete()
-    
     db.session.delete(user)
     db.session.commit()
     flash(f"User '{user.username}' and their scan history have been deleted.")
@@ -805,4 +840,3 @@ def delete_user(user_id):
 
 if __name__ == "__main__":
     app.run(debug=False)
-
