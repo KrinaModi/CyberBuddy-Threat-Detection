@@ -1,9 +1,7 @@
 import os
-import sys
 import joblib
 import pandas as pd
 import nltk
-import logging
 from flask import Flask, render_template, request, redirect, session, jsonify, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -13,20 +11,18 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from models import db, User, ScanHistory
-from preprocessing.email_preprocessor import preprocess_email
+from utils.preprocessing import clean_text
 from utils.features import extract_features
 from utils.email_nlp import EmailNLPScanner
 from utils.url_osint import scan_url_osint
 from utils.screenshot_ocr import scan_screenshot
 from utils.explanation import generate_threat_explanation
-from utils.ai_assistant import generate_ai_analysis
+from utils.analyst.analyst_report_builder import build_analyst_report
 from datetime import datetime
 
-# Set up logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
+
 
 # NLTK initialization
 try:
@@ -73,7 +69,7 @@ def seed_users():
             role="admin"
         )
         db.session.add(admin)
-        logger.info("Seeded admin account.")
+        print("Seeded admin account.")
 
     # Seed demo user if not exists
     demo = User.query.filter_by(username='demo').first()
@@ -86,11 +82,12 @@ def seed_users():
             role="user"
         )
         db.session.add(demo)
-        logger.info("Seeded demo account.")
+        print("Seeded demo account.")
 
     db.session.commit()
 
 # Safe database initialization (Apply expanded schema without losing data)
+import sys
 if "pytest" not in sys.modules and "PYTEST_CURRENT_TEST" not in os.environ:
     with app.app_context():
         db_dir = os.path.join(app.instance_path)
@@ -107,12 +104,16 @@ if "pytest" not in sys.modules and "PYTEST_CURRENT_TEST" not in os.environ:
         if recreate_needed:
             try:
                 db.session.remove()
+                try:
+                    db.engine.dispose()
+                except Exception:
+                    pass
                 import time
                 backup_file = db_file + f".bak_{int(time.time())}"
                 os.rename(db_file, backup_file)
-                logger.info(f"Backed up old SQLite database to {backup_file} and applying new schema.")
+                print(f"Backed up old SQLite database to {backup_file} and applying new schema.")
             except Exception as e:
-                logger.error(f"Failed to backup old database: {e}")
+                print("Failed to backup old database:", e)
         else:
             os.makedirs(db_dir, exist_ok=True)
 
@@ -126,7 +127,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 try:
     email_scanner = EmailNLPScanner()
 except Exception as e:
-    logger.error(f"Error initializing EmailNLPScanner: {e}")
+    print(f"Error initializing EmailNLPScanner: {e}")
     email_scanner = None
 
 
@@ -135,7 +136,7 @@ def send_otp_email(to_email, otp):
     smtp_password = os.environ.get("SMTP_PASSWORD")
     
     if not smtp_email or not smtp_password or "your-gmail-here" in smtp_email:
-        logger.warning("SMTP credentials not fully configured in .env. Falling back to console log.")
+        print("[WARNING] SMTP credentials not fully configured in .env. Falling back to console log.")
         return False
         
     try:
@@ -250,10 +251,10 @@ CyberBuddy Security Team"""
         server.sendmail(smtp_email, to_email, msg.as_string())
         server.quit()
         
-        logger.info(f"OTP email successfully sent to {to_email}")
+        print(f"[SUCCESS] OTP email successfully sent to {to_email}")
         return True
     except Exception as e:
-        logger.error(f"Failed to send OTP email to {to_email}: {e}")
+        print(f"[ERROR] Failed to send OTP email to {to_email}: {e}")
         return False
 
 
@@ -347,6 +348,7 @@ def forgot_password():
     if request.method == "POST":
         username = request.form["username"].strip()
         email = request.form["email"].strip()
+        new_password = request.form.get("new_password", "") # Original app used new_password directly but it was a flaw.
 
         user = User.query.filter_by(username=username, email=email).first()
 
@@ -386,7 +388,7 @@ def forgot_password():
                 server.quit()
                 email_sent = True
             except Exception as e:
-                logger.error(f"Failed to send reset email: {e}")
+                print(f"[ERROR] Failed to send reset email: {e}")
                 
         if email_sent:
             flash("A temporary password has been sent to your email address.")
@@ -419,42 +421,35 @@ def dashboard():
         recent_scans=recent_scans
     )
 
-def is_input_url(text):
-    """
-    Helper function to robustly distinguish between URLs/domains and emails/sentences.
-    """
-    cleaned = text.strip()
-    
-    # 1. If it starts with common URL protocols or www. prefix, it is a URL
-    if cleaned.lower().startswith(("http://", "https://", "www.")):
-        return True
-        
-    # 2. If it contains '@', it is likely an email address or email content
-    # (except for authenticated URLs like http://user@domain.com, which are matched in step 1)
-    if "@" in cleaned:
-        return False
-        
-    # 3. For raw domains, hostnames, or IP addresses:
-    # Split by '/' to analyze the main address part
-    parts = cleaned.split("/")
-    first_part = parts[0]
-    
-    # Check if the first part looks like a domain name or IP address
-    if "." in first_part and " " not in first_part and len(first_part) > 3:
-        # Check if it contains letters (domain name)
-        if any(c.isalpha() for c in first_part):
-            return True
-        # Check if it is a valid IPv4 address
-        parts_ip = first_part.split(".")
-        if len(parts_ip) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts_ip):
-            return True
-            
-    return False
-
-def evaluate_threat(text):
+def evaluate_threat(text, scan_type=None):
     cleaned_input = text.strip()
     
-    if is_input_url(cleaned_input):
+    # If not provided, strictly guess based on format
+    if not scan_type:
+        import re
+        # Strict URL regex: Starts with http/https/www OR is a clean domain (no spaces, contains dot, no @)
+        url_pattern = re.compile(
+            r'^(?:http|https)://[^\s]+$|^www\.[^\s]+$|^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:/[^\s]*)?$', 
+            re.IGNORECASE
+        )
+        if " " not in cleaned_input and url_pattern.match(cleaned_input) and "@" not in cleaned_input:
+            scan_type = "URL"
+        elif " " in cleaned_input or "\n" in cleaned_input or "@" in cleaned_input:
+            scan_type = "EMAIL"
+        else:
+            scan_type = "UNKNOWN"
+
+    if scan_type == "UNKNOWN":
+        return {
+            "scan_type": "UNKNOWN INPUT",
+            "risk_score": 0,
+            "classification": "Safe",
+            "threat_explanation": ["Unknown input format. Please specify URL or EMAIL, or use the dedicated scanner."],
+            "domain_info": None,
+            "analyst_report": None
+        }
+        
+    if scan_type == "URL":
         osint = scan_url_osint(cleaned_input)
         features = osint["features"]
         domain_info = osint["domain_info"]
@@ -464,25 +459,36 @@ def evaluate_threat(text):
             features=features,
             osint_data=osint["domain_info"] | osint["vt_data"]
         )
+        analyst_report = build_analyst_report(
+            scan_type="URL",
+            features=features,
+            risk_score=osint["risk_score"],
+            classification=osint["classification"],
+            osint_data=osint["domain_info"] | osint["vt_data"]
+        )
         return {
             "scan_type": "URL",
             "risk_score": osint["risk_score"],
             "classification": osint["classification"],
             "threat_explanation": explanation,
-            "domain_info": domain_info
+            "domain_info": domain_info,
+            "analyst_report": analyst_report
         }
     else:
         # Email NLP Engine
         nlp = email_scanner.analyze(cleaned_input)
-        
-        # Remove duplicate preprocessing by using preprocess_email() exclusively
-        cleaned_email = preprocess_email(cleaned_input)
-        features = extract_features(cleaned_email, original_text=cleaned_input)
-        
+        features = extract_features(clean_text(cleaned_input), original_text=cleaned_input)
         explanation = generate_threat_explanation(
             scan_type="EMAIL",
             risk_score=nlp["risk_score"],
             features=features,
+            nlp_analysis=nlp
+        )
+        analyst_report = build_analyst_report(
+            scan_type="EMAIL",
+            features=features,
+            risk_score=nlp["risk_score"],
+            classification=nlp["classification"],
             nlp_analysis=nlp
         )
         return {
@@ -491,14 +497,16 @@ def evaluate_threat(text):
             "classification": nlp["classification"],
             "threat_explanation": explanation,
             "domain_info": None,
-            "nlp_analysis": nlp
+            "nlp_analysis": nlp,
+            "analyst_report": analyst_report
         }
 
 @app.route("/analyze", methods=["POST"])
 @login_required
 def analyze():
     user_input = request.form["input_data"].strip()
-    analysis = evaluate_threat(user_input)
+    scan_type = request.form.get("scan_type")
+    analysis = evaluate_threat(user_input, scan_type=scan_type)
     
     scan = ScanHistory(
         user_id=session['user_id'],
@@ -507,19 +515,13 @@ def analyze():
         risk_score=analysis["risk_score"],
         classification=analysis["classification"],
         threat_explanation=analysis["threat_explanation"],
-        domain_info=analysis["domain_info"]
+        domain_info=analysis["domain_info"],
+        analyst_report=analysis.get("analyst_report")
     )
     db.session.add(scan)
     db.session.commit()
     
-    # Generate human-readable AI analysis commentary
-    ai_commentary = generate_ai_analysis(
-        analysis["scan_type"],
-        user_input,
-        analysis["risk_score"],
-        analysis["classification"],
-        analysis["threat_explanation"]
-    )
+    # Removed ai_commentary in favor of analyst_report
     
     # Query stats for dashboard render
     scans_q = ScanHistory.query.filter_by(user_id=session['user_id'])
@@ -541,7 +543,6 @@ def analyze():
             classification=analysis["classification"],
             explanation=analysis["threat_explanation"],
             domain_info=analysis["domain_info"],
-            ai_commentary=ai_commentary,
             timestamp=scan.timestamp
         )
     elif "/email-scanner" in ref:
@@ -555,7 +556,6 @@ def analyze():
             classification=analysis["classification"],
             explanation=analysis["threat_explanation"],
             nlp_analysis=analysis.get("nlp_analysis"),
-            ai_commentary=ai_commentary,
             timestamp=scan.timestamp
         )
     else:
@@ -570,7 +570,7 @@ def analyze():
             explanation=analysis["threat_explanation"],
             domain_info=analysis["domain_info"],
             nlp_analysis=analysis.get("nlp_analysis"),
-            ai_commentary=ai_commentary,
+            analyst_report=analysis.get("analyst_report"),
             timestamp=scan.timestamp,
             total_scans=total_scans,
             malicious_scans=malicious_scans,
@@ -586,8 +586,9 @@ def scan():
     try:
         data = request.get_json(silent=True) or {}
         text = data.get("input", "").strip()
+        scan_type = data.get("scan_type")
 
-        analysis = evaluate_threat(text)
+        analysis = evaluate_threat(text, scan_type=scan_type)
         
         scan = ScanHistory(
             user_id=session['user_id'],
@@ -596,7 +597,8 @@ def scan():
             risk_score=analysis["risk_score"],
             classification=analysis["classification"],
             threat_explanation=analysis["threat_explanation"],
-            domain_info=analysis["domain_info"]
+            domain_info=analysis["domain_info"],
+            analyst_report=analysis.get("analyst_report")
         )
         db.session.add(scan)
         db.session.commit()
@@ -607,10 +609,10 @@ def scan():
             "result": api_result,
             "risk": analysis["risk_score"],
             "scan_type": analysis["scan_type"],
-            "explanation": analysis["threat_explanation"]
+            "explanation": analysis["threat_explanation"],
+            "analyst_report": analysis.get("analyst_report")
         })
     except Exception as e:
-        logger.error(f"Error in API /scan: {e}")
         return jsonify({
             "result": "ERROR",
             "risk": 0,
@@ -635,7 +637,10 @@ def intel():
 @app.route("/report/<int:scan_id>")
 @login_required
 def report(scan_id):
-    scan = ScanHistory.query.get_or_404(scan_id)
+    scan = db.session.get(ScanHistory, scan_id)
+    if not scan:
+        flash("Scan report not found.")
+        return redirect("/history")
     # Check permissions
     if not session.get('is_admin') and scan.user_id != session['user_id']:
         flash("Unauthorized access to report.")
@@ -712,6 +717,16 @@ def screenshot_detector():
             ai_critique = analysis["ai_critique"]
             reasons = analysis["reasons"]
             
+            # Build AI Analyst report for screenshot
+            analyst_report = build_analyst_report(
+                scan_type="SCREENSHOT",
+                features={},
+                risk_score=analysis["risk_score"],
+                classification=analysis["classification"],
+                screenshot_category=scam_category,
+                screenshot_explanations=reasons
+            )
+            
             # Log to DB as a screenshot scan record
             scan = ScanHistory(
                 user_id=session['user_id'],
@@ -720,7 +735,8 @@ def screenshot_detector():
                 risk_score=analysis["risk_score"],
                 classification=analysis["classification"],
                 threat_explanation=reasons,
-                domain_info={"scam_category": scam_category, "file_name": file.filename}
+                domain_info={"scam_category": scam_category, "file_name": file.filename},
+                analyst_report=analyst_report
             )
             db.session.add(scan)
             db.session.commit()
@@ -736,10 +752,10 @@ def screenshot_detector():
                 "scam_verdict": scam_verdict,
                 "scam_category": scam_category,
                 "ai_critique": ai_critique,
-                "reasons": reasons
+                "reasons": reasons,
+                "analyst_report": analyst_report
             })
         except Exception as e:
-            logger.error(f"Error in screenshot detector: {e}")
             return jsonify({"status": "ERROR", "message": str(e)})
             
     return render_template("screenshot_detector.html")
@@ -833,10 +849,24 @@ def delete_user(user_id):
         
     # Delete scans associated with this user
     ScanHistory.query.filter_by(user_id=user_id).delete()
+    
     db.session.delete(user)
     db.session.commit()
     flash(f"User '{user.username}' and their scan history have been deleted.")
     return redirect("/admin/users")
 
+# ── Public information pages (no login required) ──────────────────────────────
+
+@app.route("/about", methods=["GET"])
+def about_page():
+    return render_template("about.html")
+
+@app.route("/how-to-use", methods=["GET"])
+def how_to_use_page():
+    return render_template("how_to_use.html")
+
+# ──────────────────────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     app.run(debug=False)
+

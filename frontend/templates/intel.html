@@ -107,15 +107,309 @@
         <!-- THREAT OVERVIEW & STATS (RIGHT 1/3 COLUMN) -->
         <div class="space-y-6">
             <div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-                <h2 class="text-base font-bold text-slate-200">OSINT Target Geolocation</h2>
-                <div class="aspect-square bg-slate-950/70 rounded-xl border border-slate-800 flex flex-col items-center justify-center p-6 text-center space-y-3 relative overflow-hidden">
-                    <!-- Stylized world overlay -->
-                    <div class="absolute inset-0 opacity-5 flex items-center justify-center">
-                        <i class="fa-solid fa-earth-americas text-[180px]"></i>
-                    </div>
-                    <i class="fa-solid fa-location-crosshairs text-3xl text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]"></i>
-                    <h3 class="text-sm font-bold text-slate-300">Geographic Dispersion</h3>
-                    <p class="text-slate-500 text-xs leading-normal">Active indicators mapped dynamically to hosting locations based on IP reverse resolution.</p>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-200">Global Attack Map</h2>
+                    <span class="text-[9px] font-mono font-bold tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded">LIVE_INTEL</span>
+                </div>
+
+                <!-- ── SOC WORLD MAP ── -->
+                <div class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950/80" style="aspect-ratio:16/9">
+
+                    <svg id="soc-map" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg"
+                         class="w-full h-full" style="display:block">
+                        <defs>
+                            <!-- Attack arc gradients -->
+                            <linearGradient id="arc-crit" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ef4444" stop-opacity="0"/>
+                                <stop offset="50%" stop-color="#ef4444" stop-opacity="0.9"/>
+                                <stop offset="100%" stop-color="#ef4444" stop-opacity="0.3"/>
+                            </linearGradient>
+                            <linearGradient id="arc-med" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0"/>
+                                <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.25"/>
+                            </linearGradient>
+                            <linearGradient id="arc-info" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/>
+                                <stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/>
+                                <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.2"/>
+                            </linearGradient>
+                            <!-- Glow filters -->
+                            <filter id="crit-glow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="2.5" result="b"/>
+                                <feComposite in="SourceGraphic" in2="b" operator="over"/>
+                            </filter>
+                            <filter id="med-glow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="2" result="b"/>
+                                <feComposite in="SourceGraphic" in2="b" operator="over"/>
+                            </filter>
+                            <filter id="info-glow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="1.5" result="b"/>
+                                <feComposite in="SourceGraphic" in2="b" operator="over"/>
+                            </filter>
+                        </defs>
+
+                        <!-- ── BACKGROUND ── -->
+                        <rect width="800" height="450" fill="#020617"/>
+
+                        <!-- ── LATITUDE GRID (very faint) ── -->
+                        <g stroke="rgba(6,182,212,0.04)" stroke-width="0.5" fill="none">
+                            <!-- Equator -->
+                            <line x1="0" y1="225" x2="800" y2="225"/>
+                            <!-- 30° N/S -->
+                            <line x1="0" y1="150" x2="800" y2="150"/>
+                            <line x1="0" y1="300" x2="800" y2="300"/>
+                            <!-- 60° N/S -->
+                            <line x1="0" y1="75" x2="800" y2="75"/>
+                            <line x1="0" y1="375" x2="800" y2="375"/>
+                            <!-- Meridians every 60° -->
+                            <line x1="133" y1="0" x2="133" y2="450"/>
+                            <line x1="266" y1="0" x2="266" y2="450"/>
+                            <line x1="400" y1="0" x2="400" y2="450"/>
+                            <line x1="533" y1="0" x2="533" y2="450"/>
+                            <line x1="666" y1="0" x2="666" y2="450"/>
+                        </g>
+
+                        <!-- ══════════════════════════════════════════════
+                             CONTINENT OUTLINES
+                             Equirectangular projection:
+                               x = (lon + 180) * (800/360)
+                               y = (90 - lat) * (450/180)
+                        ══════════════════════════════════════════════ -->
+                        <g fill="none" stroke="rgba(148,163,184,0.14)" stroke-width="1" stroke-linejoin="round" stroke-linecap="round">
+
+                            <!-- NORTH AMERICA (simplified) -->
+                            <path d="M 82,68 L 90,62 L 115,58 L 145,52 L 165,55
+                                     L 185,70 L 195,80 L 200,95 L 205,110
+                                     L 215,125 L 220,145 L 218,165 L 210,175
+                                     L 195,185 L 180,190 L 165,195 L 150,200
+                                     L 135,195 L 125,185 L 115,175 L 108,160
+                                     L 100,145 L 92,130 L 85,115 L 80,100
+                                     L 78,85 Z"/>
+                            <!-- Baja + Mexico tail -->
+                            <path d="M 135,195 L 140,205 L 148,215 L 152,225 L 148,230"/>
+                            <!-- Central America hint -->
+                            <path d="M 175,205 L 180,215 L 188,225 L 192,235"/>
+
+                            <!-- SOUTH AMERICA (simplified) -->
+                            <path d="M 192,235 L 200,228 L 215,232 L 228,240
+                                     L 238,255 L 245,275 L 248,295 L 245,315
+                                     L 238,335 L 228,350 L 215,362 L 205,370
+                                     L 195,365 L 185,350 L 178,330 L 175,310
+                                     L 172,290 L 170,268 L 175,250 L 180,240
+                                     L 188,235 Z"/>
+
+                            <!-- EUROPE (simplified) -->
+                            <path d="M 370,72 L 385,65 L 400,60 L 418,58
+                                     L 435,62 L 445,72 L 450,85 L 448,98
+                                     L 440,108 L 428,115 L 415,118 L 400,120
+                                     L 388,115 L 375,108 L 368,98 L 366,85 Z"/>
+                            <!-- Iberian -->
+                            <path d="M 370,108 L 362,118 L 360,130 L 365,140 L 375,142 L 382,132"/>
+                            <!-- Scandinavian hint -->
+                            <path d="M 418,58 L 422,50 L 428,42 L 435,38 L 438,48"/>
+
+                            <!-- AFRICA (simplified) -->
+                            <path d="M 380,145 L 395,138 L 415,135 L 435,138
+                                     L 450,148 L 460,165 L 465,185 L 468,208
+                                     L 465,230 L 458,255 L 448,278 L 435,298
+                                     L 418,312 L 400,318 L 382,312 L 368,298
+                                     L 358,278 L 352,255 L 350,230 L 352,208
+                                     L 358,185 L 365,165 L 372,152 Z"/>
+
+                            <!-- ASIA (simplified, major body) -->
+                            <path d="M 448,58 L 470,52 L 500,48 L 535,45
+                                     L 568,48 L 598,55 L 622,65 L 638,78
+                                     L 648,95 L 652,112 L 648,128 L 638,142
+                                     L 620,155 L 598,165 L 572,172 L 545,175
+                                     L 518,172 L 492,165 L 468,155 L 450,142
+                                     L 440,128 L 438,112 L 440,95 L 444,78 Z"/>
+                            <!-- India peninsula -->
+                            <path d="M 540,175 L 545,190 L 548,208 L 545,225 L 538,235 L 530,228 L 525,208 L 522,190 L 525,178"/>
+                            <!-- Southeast Asia hint -->
+                            <path d="M 620,155 L 635,162 L 648,172 L 658,185 L 655,198 L 645,205"/>
+                            <!-- Korean/Japan hint -->
+                            <path d="M 650,112 L 660,108 L 668,115 L 665,125 L 655,128"/>
+
+                            <!-- AUSTRALIA (simplified) -->
+                            <path d="M 620,270 L 638,262 L 658,260 L 675,265
+                                     L 688,278 L 695,295 L 692,312 L 682,325
+                                     L 665,332 L 645,332 L 628,325 L 618,312
+                                     L 612,295 L 614,278 Z"/>
+
+                            <!-- GREENLAND (hint) -->
+                            <path d="M 165,38 L 178,32 L 195,30 L 210,32 L 218,42 L 215,52 L 200,58 L 182,58 L 168,52 Z"/>
+                        </g>
+
+                        <!-- ══════════════════════════════════════════════
+                             ATTACK ARCS — class="arc-crit|arc-med|arc-info"
+                             All arcs use quadratic bezier: M src Q ctrl dst
+                             Control point is elevated ~80–120px above midpoint
+                             for the natural great-circle arc appearance.
+                        ══════════════════════════════════════════════ -->
+
+                        <!-- CRITICAL attacks (red) -->
+                        <!-- Russia → US East Coast -->
+                        <path class="arc-line arc-crit-line" d="M 560,85 Q 380,20 215,130"
+                              fill="none" stroke="#ef4444" stroke-width="1.5"
+                              filter="url(#crit-glow)" opacity="0.85"/>
+                        <!-- China → Europe -->
+                        <path class="arc-line arc-crit-line" d="M 638,115 Q 520,30 415,75"
+                              fill="none" stroke="#ef4444" stroke-width="1.5"
+                              filter="url(#crit-glow)" opacity="0.85"/>
+                        <!-- North Korea → Japan -->
+                        <path class="arc-line arc-crit-line" d="M 645,118 Q 662,100 665,120"
+                              fill="none" stroke="#ef4444" stroke-width="1.2"
+                              filter="url(#crit-glow)" opacity="0.75"/>
+
+                        <!-- MEDIUM attacks (amber) -->
+                        <!-- Eastern Europe → US West Coast -->
+                        <path class="arc-line arc-med-line" d="M 465,88 Q 300,10 130,140"
+                              fill="none" stroke="#f59e0b" stroke-width="1.2"
+                              filter="url(#med-glow)" opacity="0.8"/>
+                        <!-- SE Asia → Australia -->
+                        <path class="arc-line arc-med-line" d="M 645,200 Q 668,240 655,290"
+                              fill="none" stroke="#f59e0b" stroke-width="1.2"
+                              filter="url(#med-glow)" opacity="0.75"/>
+                        <!-- West Africa → UK -->
+                        <path class="arc-line arc-med-line" d="M 400,235 Q 385,170 390,95"
+                              fill="none" stroke="#f59e0b" stroke-width="1"
+                              filter="url(#med-glow)" opacity="0.7"/>
+
+                        <!-- INFO / low-risk (cyan) -->
+                        <!-- Brazil → US -->
+                        <path class="arc-line arc-info-line" d="M 215,285 Q 185,195 175,155"
+                              fill="none" stroke="#22d3ee" stroke-width="1"
+                              filter="url(#info-glow)" opacity="0.65"/>
+                        <!-- India → Middle East -->
+                        <path class="arc-line arc-info-line" d="M 542,195 Q 505,155 470,148"
+                              fill="none" stroke="#22d3ee" stroke-width="1"
+                              filter="url(#info-glow)" opacity="0.6"/>
+
+                        <!-- ══════════════════════════════════════════════
+                             ENDPOINT DOTS — source & destination markers
+                        ══════════════════════════════════════════════ -->
+                        <!-- Sources (origins) -->
+                        <g class="src-dots">
+                            <circle cx="560" cy="85"  r="2.5" fill="#ef4444" class="pulse-dot-crit"/><!-- Russia -->
+                            <circle cx="638" cy="115" r="2.5" fill="#ef4444" class="pulse-dot-crit"/><!-- China -->
+                            <circle cx="645" cy="118" r="2"   fill="#ef4444" class="pulse-dot-crit"/><!-- NK -->
+                            <circle cx="465" cy="88"  r="2.5" fill="#f59e0b" class="pulse-dot-med"/> <!-- E.Europe -->
+                            <circle cx="645" cy="200" r="2.5" fill="#f59e0b" class="pulse-dot-med"/> <!-- SE Asia -->
+                            <circle cx="400" cy="235" r="2"   fill="#f59e0b" class="pulse-dot-med"/> <!-- W.Africa -->
+                            <circle cx="215" cy="285" r="2"   fill="#22d3ee" class="pulse-dot-info"/><!-- Brazil -->
+                            <circle cx="542" cy="195" r="2"   fill="#22d3ee" class="pulse-dot-info"/><!-- India -->
+                        </g>
+
+                        <!-- Destinations (targets) — slightly larger, brighter -->
+                        <g class="dst-dots">
+                            <circle cx="215" cy="130" r="3.5" fill="#ef4444" class="pulse-dot-crit"/><!-- US EC -->
+                            <circle cx="415" cy="75"  r="3"   fill="#ef4444" class="pulse-dot-crit"/><!-- Europe -->
+                            <circle cx="665" cy="120" r="2.5" fill="#ef4444" class="pulse-dot-crit"/><!-- Japan -->
+                            <circle cx="130" cy="140" r="3"   fill="#f59e0b" class="pulse-dot-med"/> <!-- US WC -->
+                            <circle cx="655" cy="290" r="3"   fill="#f59e0b" class="pulse-dot-med"/> <!-- AUS -->
+                            <circle cx="390" cy="95"  r="2.5" fill="#f59e0b" class="pulse-dot-med"/> <!-- UK -->
+                            <circle cx="175" cy="155" r="2.5" fill="#22d3ee" class="pulse-dot-info"/><!-- US (info) -->
+                            <circle cx="470" cy="148" r="2.5" fill="#22d3ee" class="pulse-dot-info"/><!-- Mid East -->
+                        </g>
+
+                        <!-- ── CITY REFERENCE DOTS (major SOC targets) ── -->
+                        <g fill="rgba(148,163,184,0.3)" class="city-dots">
+                            <circle cx="200" cy="115" r="1.2"/> <!-- New York -->
+                            <circle cx="118" cy="128" r="1.2"/> <!-- Los Angeles -->
+                            <circle cx="400" cy="85"  r="1.2"/> <!-- London -->
+                            <circle cx="415" cy="88"  r="1.2"/> <!-- Paris -->
+                            <circle cx="458" cy="82"  r="1.2"/> <!-- Berlin -->
+                            <circle cx="508" cy="92"  r="1.2"/> <!-- Moscow -->
+                            <circle cx="620" cy="118" r="1.2"/> <!-- Beijing -->
+                            <circle cx="648" cy="132" r="1.2"/> <!-- Tokyo -->
+                            <circle cx="540" cy="192" r="1.2"/> <!-- Mumbai -->
+                            <circle cx="658" cy="295" r="1.2"/> <!-- Sydney -->
+                            <circle cx="220" cy="268" r="1.2"/> <!-- São Paulo -->
+                        </g>
+
+                        <!-- ── LEGEND ── -->
+                        <g font-family="monospace" font-size="6.5" fill="rgba(148,163,184,0.55)">
+                            <circle cx="15" cy="428" r="3" fill="#ef4444" opacity="0.85"/>
+                            <text x="22" y="431">CRITICAL</text>
+                            <circle cx="70" cy="428" r="3" fill="#f59e0b" opacity="0.8"/>
+                            <text x="77" y="431">MEDIUM</text>
+                            <circle cx="122" cy="428" r="3" fill="#22d3ee" opacity="0.7"/>
+                            <text x="129" y="431">INFO</text>
+                        </g>
+                    </svg>
+
+                    <!-- Arc animation styles + pulse keyframes -->
+                    <style>
+                        /* Draw-on animation for attack arcs */
+                        .arc-line {
+                            stroke-dasharray: 600;
+                            stroke-dashoffset: 600;
+                            animation: draw-arc 2.8s ease-in-out forwards;
+                        }
+                        /* Stagger each arc group */
+                        .arc-crit-line:nth-child(1) { animation-delay: 0.3s; }
+                        .arc-crit-line:nth-child(2) { animation-delay: 1.1s; }
+                        .arc-crit-line:nth-child(3) { animation-delay: 1.8s; }
+                        .arc-med-line:nth-child(4)  { animation-delay: 0.8s; }
+                        .arc-med-line:nth-child(5)  { animation-delay: 1.5s; }
+                        .arc-med-line:nth-child(6)  { animation-delay: 2.2s; }
+                        .arc-info-line:nth-child(7) { animation-delay: 1.2s; }
+                        .arc-info-line:nth-child(8) { animation-delay: 2.0s; }
+
+                        @keyframes draw-arc {
+                            to { stroke-dashoffset: 0; }
+                        }
+
+                        /* Pulse rings at endpoints */
+                        .pulse-dot-crit {
+                            animation: pulse-crit 2s ease-out infinite;
+                            transform-box: fill-box;
+                            transform-origin: center;
+                        }
+                        .pulse-dot-med {
+                            animation: pulse-med 2.4s ease-out infinite;
+                            transform-box: fill-box;
+                            transform-origin: center;
+                        }
+                        .pulse-dot-info {
+                            animation: pulse-info 3s ease-out infinite;
+                            transform-box: fill-box;
+                            transform-origin: center;
+                        }
+                        @keyframes pulse-crit {
+                            0%   { opacity:1; r:2.5; }
+                            50%  { opacity:0.6; }
+                            100% { opacity:1; r:2.5; }
+                        }
+                        @keyframes pulse-med {
+                            0%   { opacity:1; }
+                            50%  { opacity:0.5; }
+                            100% { opacity:1; }
+                        }
+                        @keyframes pulse-info {
+                            0%   { opacity:0.8; }
+                            50%  { opacity:0.35; }
+                            100% { opacity:0.8; }
+                        }
+                    </style>
+                </div>
+
+                <!-- Attack count summary strip -->
+                <div class="flex items-center justify-between text-[10px] font-mono pt-1">
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                        <span class="text-slate-400">3 Critical</span>
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                        <span class="text-slate-400">3 Medium</span>
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"></span>
+                        <span class="text-slate-400">2 Info</span>
+                    </span>
+                    <span class="text-slate-600">8 arcs active</span>
                 </div>
             </div>
 

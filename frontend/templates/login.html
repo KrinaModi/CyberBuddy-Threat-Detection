@@ -3,88 +3,1931 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberBuddy | Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="CyberBuddy SOC – AI-Powered Cyber Threat Detection & Intelligence Platform. Detect threats, analyze attacks, and generate intelligent security reports.">
+    <title>CyberBuddy SOC — Sign In to Your Operations Center</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon -->
+    
+
     <style>
+        /* ============================================================
+           DESIGN TOKENS & RESET
+        ============================================================ */
+        :root {
+            --navy-950: #020617;
+            --navy-900: #0f172a;
+            --navy-800: #1e293b;
+            --navy-700: #334155;
+            --slate-500: #64748b;
+            --slate-400: #94a3b8;
+            --slate-300: #cbd5e1;
+            --white:    #f8fafc;
+            --cyan-500: #06b6d4;
+            --cyan-400: #22d3ee;
+            --cyan-300: #67e8f9;
+            --blue-600: #2563eb;
+            --blue-500: #3b82f6;
+            --blue-400: #60a5fa;
+            --emerald:  #10b981;
+            --rose:     #f43f5e;
+            --amber:    #f59e0b;
+            --glass-bg: rgba(15, 23, 42, 0.65);
+            --glass-border: rgba(255,255,255,0.08);
+            --glass-glow:   rgba(6, 182, 212, 0.15);
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: 'Outfit', sans-serif;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1a 100%);
+            font-family: var(--font-main);
+            background: var(--navy-950);
+            color: var(--white);
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ============================================================
+           ANIMATED CANVAS BACKGROUND
+        ============================================================ */
+        #cyber-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Ambient radial glows */
+        .ambient-glow {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .ambient-glow-1 {
+            width: 700px; height: 700px;
+            top: -200px; left: -150px;
+            background: radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%);
+        }
+        .ambient-glow-2 {
+            width: 600px; height: 600px;
+            bottom: -150px; right: -100px;
+            background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+        }
+        .ambient-glow-3 {
+            width: 400px; height: 400px;
+            top: 40%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(6,182,212,0.03) 0%, transparent 70%);
+        }
+
+        /* ============================================================
+           PAGE LAYOUT
+        ============================================================ */
+        .page-wrapper {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ============================================================
+           TOP HEADER BAR
+        ============================================================ */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .top-bar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .shield-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2));
+            border: 1px solid rgba(6,182,212,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan-400);
+            font-size: 1rem;
+            animation: shield-pulse 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes shield-pulse {
+            0%  { box-shadow: 0 0 8px rgba(6,182,212,0.2); }
+            100%{ box-shadow: 0 0 20px rgba(6,182,212,0.5), 0 0 40px rgba(6,182,212,0.15); }
+        }
+
+        .brand-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            color: var(--white);
+        }
+        .brand-name span { color: var(--cyan-400); }
+
+        .brand-version {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--slate-500);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
+        .top-bar-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--emerald);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--emerald);
+            position: relative;
+        }
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: var(--emerald);
+            opacity: 0.3;
+            animation: ping 1.5s ease-in-out infinite;
+        }
+        @keyframes ping {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50%       { transform: scale(1.6); opacity: 0; }
+        }
+
+        /* ============================================================
+           MAIN CONTENT GRID
+        ============================================================ */
+        .main-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 480px 1fr;
+            gap: 0;
+            align-items: start;
+            padding: 2.5rem 2rem 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ============================================================
+           LEFT COLUMN
+        ============================================================ */
+        .left-col {
+            padding-right: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateX(-30px);
+            animation: slideInLeft 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+        }
+        @keyframes slideInLeft {
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Hero Brand Block */
+        .hero-block {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .soc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(6,182,212,0.08);
+            border: 1px solid rgba(6,182,212,0.2);
+            color: var(--cyan-400);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.4rem 0.9rem;
+            border-radius: 100px;
+            width: fit-content;
+        }
+        .soc-badge-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--cyan-400);
+            animation: ping 1.5s ease-in-out infinite;
+        }
+
+        .hero-title {
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            color: var(--white);
+        }
+        .hero-title .gradient-text {
+            background: linear-gradient(135deg, var(--cyan-400), var(--blue-400));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 0.9rem;
+            color: var(--slate-400);
+            line-height: 1.7;
+            max-width: 400px;
+        }
+
+        /* Feature Cards Grid */
+        .module-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .module-card {
+            background: rgba(15,23,42,0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1rem 1.1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            cursor: default;
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
-        .grid-bg {
+        .module-card::before {
+            content: '';
             position: absolute;
             inset: 0;
-            background-image:
-                linear-gradient(to right, rgba(0,255,255,0.06) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0,255,255,0.06) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.04), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .module-card:hover {
+            border-color: rgba(6,182,212,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(6,182,212,0.08);
+        }
+        .module-card:hover::before { opacity: 1; }
+
+        .module-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        .module-card:hover .module-icon { transform: scale(1.1) rotate(-3deg); }
+
+        .module-icon.cyan  { background: rgba(6,182,212,0.12);  border: 1px solid rgba(6,182,212,0.2);  color: var(--cyan-400); }
+        .module-icon.blue  { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.2); color: var(--blue-400); }
+        .module-icon.violet{ background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.2); color: #a78bfa; }
+        .module-icon.emerald{background:rgba(16,185,129,0.12);  border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+        .module-icon.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.2); color: var(--amber); }
+        .module-icon.rose  { background: rgba(244,63,94,0.12);  border: 1px solid rgba(244,63,94,0.2);  color: #fb7185; }
+
+        .module-info { flex: 1; min-width: 0; }
+        .module-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .module-desc {
+            font-size: 0.68rem;
+            color: var(--slate-500);
+            line-height: 1.5;
+        }
+
+        /* System Status Panel */
+        .status-panel {
+            background: rgba(15,23,42,0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 1.2rem 1.4rem;
+        }
+        .status-panel-header {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .status-panel-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .status-rows { display: flex; flex-direction: column; gap: 0.65rem; }
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.78rem;
+            color: var(--slate-300);
+        }
+        .status-indicator {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-indicator.online  { background: var(--emerald); box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+        .status-indicator.warning { background: var(--amber);   box-shadow: 0 0 6px rgba(245,158,11,0.6); }
+        .status-indicator.offline { background: var(--rose);    box-shadow: 0 0 6px rgba(244,63,94,0.6); }
+
+        .status-label { flex: 1; }
+        .status-badge {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 600;
+        }
+        .status-badge.ok      { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .status-badge.standby { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+
+        /* ============================================================
+           CENTER COLUMN – AUTH CARD
+        ============================================================ */
+        .center-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.25rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideInUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s forwards;
+        }
+        @keyframes slideInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Brand hero above card */
+        .center-brand {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .center-logo {
+            width: 60px; height: 60px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(59,130,246,0.2));
+            border: 1px solid rgba(6,182,212,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: var(--cyan-400);
+            animation: shield-pulse 3s ease-in-out infinite alternate;
+            margin-bottom: 0.2rem;
+        }
+        .center-brand-name {
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--white);
+        }
+        .center-brand-name span { color: var(--cyan-400); }
+        .center-brand-subtitle {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            color: var(--slate-500);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .center-brand-tagline {
+            font-size: 0.8rem;
+            color: var(--slate-400);
+            text-align: center;
+            max-width: 340px;
+            line-height: 1.6;
+        }
+
+        /* Auth Card */
+        .auth-card {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 2.2rem 2rem;
+            box-shadow:
+                0 25px 60px rgba(0,0,0,0.5),
+                0 0 0 1px rgba(6,182,212,0.05),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Corner accent lines */
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 60px; height: 60px;
+            border-top: 2px solid rgba(6,182,212,0.4);
+            border-left: 2px solid rgba(6,182,212,0.4);
+            border-radius: 24px 0 0 0;
             pointer-events: none;
-            z-index: 0;
         }
-        .glass-card {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+        .auth-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 60px; height: 60px;
+            border-bottom: 2px solid rgba(59,130,246,0.4);
+            border-right: 2px solid rgba(59,130,246,0.4);
+            border-radius: 0 0 24px 0;
+            pointer-events: none;
         }
-        .btn-gradient {
-            background: linear-gradient(90deg, #22d3ee, #3b82f6);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+        .auth-card-header {
+            text-align: center;
+            margin-bottom: 1.75rem;
         }
-        .btn-gradient:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(34, 211, 238, 0.4);
+        .auth-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 0.3rem;
         }
-        .logo-img {
-            width: 100px;
+        .auth-card-subtitle {
+            font-size: 0.75rem;
+            color: var(--slate-500);
+            font-family: var(--font-mono);
+            letter-spacing: 0.06em;
+        }
+
+        /* Error message */
+        .error-alert {
+            background: rgba(244,63,94,0.08);
+            border: 1px solid rgba(244,63,94,0.25);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.65rem;
+        }
+        .error-alert i  { color: #fb7185; font-size: 0.85rem; margin-top: 1px; flex-shrink: 0; }
+        .error-alert p  { color: #fca5a5; font-size: 0.8rem; line-height: 1.5; }
+
+        /* Input fields */
+        .form-group { position: relative; margin-bottom: 1rem; }
+
+        .form-label {
             display: block;
-            margin: auto;
-            margin-bottom: 8px;
-            filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6));
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--slate-400);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+            font-family: var(--font-mono);
         }
+
+        .input-wrapper { position: relative; }
+
+        .input-icon-left {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--slate-500);
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 0.9rem;
+            font-family: var(--font-main);
+            outline: none;
+            transition: all 0.25s ease;
+        }
+        .form-input::placeholder { color: var(--slate-500); font-size: 0.85rem; }
+
+        .form-input:focus {
+            background: rgba(6,182,212,0.04);
+            border-color: rgba(6,182,212,0.5);
+            box-shadow: 0 0 0 3px rgba(6,182,212,0.08), 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .form-input:focus ~ .input-icon-left { color: var(--cyan-400); }
+
+        /* Fix icon layering – icon sits before input in DOM but must display over */
+        .input-wrapper .input-icon-left { pointer-events: none; }
+
+        /* Forgot password link */
+        .forgot-link {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.4rem;
+            margin-top: -0.3rem;
+        }
+        .forgot-link a {
+            font-size: 0.75rem;
+            color: var(--cyan-400);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .forgot-link a:hover { color: var(--cyan-300); }
+
+        /* Primary login button */
+        .btn-login {
+            width: 100%;
+            padding: 0.95rem 1.5rem;
+            background: linear-gradient(135deg, #0284c7 0%, #3b82f6 100%);
+            border: none;
+            border-radius: 12px;
+            color: var(--white);
+            font-size: 0.9rem;
+            font-weight: 700;
+            font-family: var(--font-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            letter-spacing: 0.02em;
+        }
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(59,130,246,0.4);
+        }
+        .btn-login:hover::before { left: 100%; }
+        .btn-login:active { transform: translateY(0); }
+
+        /* Secondary button – Explore Modules */
+        .btn-secondary {
+            width: 100%;
+            padding: 0.85rem 1.5rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: var(--slate-300);
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: var(--font-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 0.75rem;
+            letter-spacing: 0.01em;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(6,182,212,0.25);
+            color: var(--cyan-300);
+        }
+
+        /* Card divider */
+        .card-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 1.4rem 0 1.25rem;
+        }
+        .card-divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+        .card-divider-text {
+            font-size: 0.68rem;
+            color: var(--slate-500);
+            font-family: var(--font-mono);
+            white-space: nowrap;
+        }
+
+        /* Footer links in card */
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 1.1rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: 1.25rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .card-footer-left {
+            font-size: 0.76rem;
+            color: var(--slate-400);
+        }
+        .card-footer-left a {
+            color: var(--cyan-400);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .card-footer-left a:hover { color: var(--cyan-300); }
+
+        .card-footer-right a {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--slate-500);
+            text-decoration: none;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .card-footer-right a:hover { color: var(--slate-300); }
+
+        /* ============================================================
+           RIGHT COLUMN – THREAT INTELLIGENCE WIDGET
+        ============================================================ */
+        .right-col {
+            padding-left: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            opacity: 0;
+            transform: translateX(30px);
+            animation: slideInRight 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+        }
+        @keyframes slideInRight {
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Threat Intel Widget */
+        .threat-widget {
+            background: rgba(15,23,42,0.55);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 18px;
+            padding: 1.4rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .threat-widget::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan-500), var(--blue-500), transparent);
+            opacity: 0.6;
+        }
+
+        .widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.2rem;
+        }
+        .widget-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .widget-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: 0.02em;
+        }
+        .widget-icon {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            background: rgba(6,182,212,0.12);
+            border: 1px solid rgba(6,182,212,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--cyan-400);
+            font-size: 0.7rem;
+        }
+        .demo-badge {
+            font-family: var(--font-mono);
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: var(--amber);
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 100px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .threat-api-sources {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        .api-source-tag {
+            font-family: var(--font-mono);
+            font-size: 0.58rem;
+            color: var(--slate-500);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 0.18rem 0.5rem;
+            border-radius: 100px;
+        }
+
+        /* Threat Feed Items */
+        .threat-feed { display: flex; flex-direction: column; gap: 0.55rem; }
+
+        .threat-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.7rem 0.85rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px;
+            transition: all 0.25s ease;
+        }
+        .threat-item:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.09);
+        }
+
+        .threat-severity {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        .threat-severity.critical { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
+        .threat-severity.high     { background: #f97316; box-shadow: 0 0 6px rgba(249,115,22,0.6); }
+        .threat-severity.medium   { background: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.6); }
+        .threat-severity.low      { background: var(--emerald); box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+
+        .threat-body { flex: 1; min-width: 0; }
+        .threat-name {
+            font-size: 0.73rem;
+            font-weight: 600;
+            color: var(--slate-300);
+            margin-bottom: 0.15rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .threat-meta {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--slate-500);
+        }
+
+        .threat-tag {
+            font-family: var(--font-mono);
+            font-size: 0.58rem;
+            padding: 0.18rem 0.45rem;
+            border-radius: 6px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .threat-tag.phishing { background: rgba(239,68,68,0.1);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .threat-tag.malware  { background: rgba(249,115,22,0.1); color: #fdba74; border: 1px solid rgba(249,115,22,0.2); }
+        .threat-tag.c2       { background: rgba(139,92,246,0.1); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.2); }
+        .threat-tag.spam     { background: rgba(245,158,11,0.1); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+        .threat-tag.safe     { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+
+        .widget-footer {
+            margin-top: 1rem;
+            padding-top: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .widget-footer-note {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--slate-500);
+        }
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--slate-500);
+        }
+        .live-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--amber);
+            animation: ping 2s ease-in-out infinite;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 0.6rem;
+        }
+        .stat-card {
+            background: rgba(15,23,42,0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 0.9rem 0.75rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            border-color: rgba(6,182,212,0.2);
+            background: rgba(6,182,212,0.04);
+        }
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--cyan-400);
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+        .stat-label {
+            font-size: 0.62rem;
+            color: var(--slate-500);
+            line-height: 1.3;
+        }
+
+        /* Encryption footer badge */
+        .secure-footer-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1rem;
+            background: rgba(16,185,129,0.05);
+            border: 1px solid rgba(16,185,129,0.12);
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: rgba(52,211,153,0.8);
+            letter-spacing: 0.06em;
+        }
+        .secure-footer-badge i { font-size: 0.75rem; }
+
+        /* ============================================================
+           BOTTOM FOOTER
+        ============================================================ */
+        .page-footer {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            background: rgba(2,6,23,0.5);
+        }
+        .footer-left {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            color: var(--slate-500);
+        }
+        .footer-right {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .footer-right a {
+            font-size: 0.7rem;
+            color: var(--slate-500);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-right a:hover { color: var(--cyan-400); }
+
+        /* ============================================================
+           MOBILE RESPONSIVE
+        ============================================================ */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr 440px;
+                grid-template-areas: "left center" "right right";
+                gap: 2rem;
+            }
+            .left-col  { grid-area: left;   padding-right: 0; }
+            .center-col{ grid-area: center; }
+            .right-col { grid-area: right;  padding-left: 0; flex-direction: row; flex-wrap: wrap; }
+            .right-col > * { flex: 1; min-width: 260px; }
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas: "center" "left" "right";
+                padding: 1.5rem 1rem;
+                gap: 1.5rem;
+            }
+            .left-col  { padding-right: 0; }
+            .right-col { padding-left: 0; }
+            .hero-title { font-size: 1.8rem; }
+            .module-grid { grid-template-columns: 1fr 1fr; }
+            .top-bar-status { display: none; }
+        }
+
+        @media (max-width: 540px) {
+            .top-bar { padding: 1rem 1.25rem; }
+            .auth-card { padding: 1.75rem 1.25rem; }
+            .module-grid { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: repeat(3,1fr); }
+            .card-footer { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .page-footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+            .right-col { flex-direction: column; }
+        }
+
+        /* ============================================================
+           SCROLLBAR
+        ============================================================ */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--slate-500); }
+
+        /* ============================================================
+           CB LOGO MARK – Digital Eye + Hexagonal Iris
+           currentColor inherits from parent — works in any context.
+        ============================================================ */
+            flex-shrink: 0;
+            display: block;
+            color: var(--cyan-400);
+        }
+
+
+
+
+        /* ============================================================
+           EXPLORE MODULES MODAL
+        ============================================================ */
+        .mod-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: rgba(2,6,23,0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.28s ease;
+        }
+        .mod-overlay.is-open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .mod-panel {
+            background: rgba(15,23,42,0.92);
+            border: 1px solid rgba(6,182,212,0.18);
+            border-radius: 20px;
+            box-shadow: 0 0 80px rgba(6,182,212,0.08),
+                        0 0 0 1px rgba(255,255,255,0.04),
+                        0 40px 80px rgba(0,0,0,0.6);
+            max-width: 960px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(24px) scale(0.97);
+            transition: transform 0.32s cubic-bezier(.22,.68,0,1.15);
+        }
+        .mod-overlay.is-open .mod-panel {
+            transform: translateY(0) scale(1);
+        }
+        .mod-panel::-webkit-scrollbar { width: 4px; }
+        .mod-panel::-webkit-scrollbar-track { background: transparent; }
+        .mod-panel::-webkit-scrollbar-thumb { background: var(--navy-700); border-radius: 4px; }
+
+        .mod-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.75rem 2rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            position: sticky;
+            top: 0;
+            background: rgba(15,23,42,0.97);
+            backdrop-filter: blur(8px);
+            z-index: 1;
+            border-radius: 20px 20px 0 0;
+        }
+        .mod-header-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .mod-header-text .mod-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--white);
+            letter-spacing: -0.01em;
+        }
+        .mod-header-text .mod-subtitle {
+            font-size: 0.72rem;
+            color: var(--slate-400);
+            font-family: var(--font-mono);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 0.15rem;
+        }
+        .mod-close {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--slate-400);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .mod-close:hover { background: rgba(244,63,94,0.15); color: var(--rose); border-color: rgba(244,63,94,0.3); }
+
+        .mod-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: rgba(255,255,255,0.04);
+            padding: 1px;
+            border-radius: 0 0 20px 20px;
+            overflow: hidden;
+        }
+        @media (max-width: 640px) { .mod-grid { grid-template-columns: 1fr; } }
+
+        .mod-card {
+            background: rgba(15,23,42,0.95);
+            padding: 1.6rem 1.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            transition: background 0.2s;
+        }
+        .mod-card:hover { background: rgba(6,182,212,0.04); }
+        .mod-card:last-child { border-radius: 0 0 19px 19px; }
+        .mod-card:nth-last-child(2) { border-radius: 0 0 0 19px; }
+
+        .mod-icon-row {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+        .mod-icon {
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .mod-icon.cyan    { background: rgba(6,182,212,0.12); color: var(--cyan-400); border: 1px solid rgba(6,182,212,0.2); }
+        .mod-icon.blue    { background: rgba(59,130,246,0.12); color: var(--blue-400); border: 1px solid rgba(59,130,246,0.2); }
+        .mod-icon.emerald { background: rgba(16,185,129,0.12); color: var(--emerald);  border: 1px solid rgba(16,185,129,0.2); }
+        .mod-icon.amber   { background: rgba(245,158,11,0.12); color: var(--amber);    border: 1px solid rgba(245,158,11,0.2); }
+        .mod-icon.violet  { background: rgba(139,92,246,0.12); color: #a78bfa;          border: 1px solid rgba(139,92,246,0.2); }
+        .mod-icon.rose    { background: rgba(244,63,94,0.12);  color: var(--rose);     border: 1px solid rgba(244,63,94,0.2); }
+
+        .mod-name { font-size: 1rem; font-weight: 700; color: var(--white); }
+        .mod-badge {
+            font-size: 0.65rem; font-family: var(--font-mono);
+            font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(6,182,212,0.08);
+            color: var(--cyan-400);
+            border: 1px solid rgba(6,182,212,0.15);
+        }
+        .mod-purpose {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--slate-300);
+        }
+        .mod-desc {
+            font-size: 0.78rem;
+            color: var(--slate-400);
+            line-height: 1.6;
+        }
+        .mod-flow {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.3rem;
+        }
+        .mod-flow-step {
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--slate-400);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+        }
+        .mod-flow-arrow {
+            font-size: 0.6rem;
+            color: var(--cyan-500);
+            opacity: 0.7;
+        }
+
+        /* Enhanced hover for module cards (left col) */
+        .module-card:hover .module-card-icon {
+            box-shadow: 0 0 18px rgba(6,182,212,0.25);
+            border-color: rgba(6,182,212,0.4);
+        }
+        /* Enhanced status indicators */
+        .status-led.ok {
+            animation: led-pulse 2s ease-in-out infinite;
+        }
+        @keyframes led-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+            50%       { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+        }
+    
+        /* Overrides for Final V1 Polish */
+        .center-brand-name {
+            font-size: 2rem !important; /* Reduced to make map the hero */
+            letter-spacing: 0.15em !important;
+        }
+        .center-brand-subtitle {
+            font-size: 0.75rem !important;
+        }
+        .center-brand-tagline {
+            font-size: 0.65rem !important;
+            opacity: 0.6 !important;
+        }
+        .main-grid {
+            /* ensure nothing blocks the background */
+            background: transparent !important;
+        }
+        body {
+            /* slightly darker base to let oceans pop in canvas */
+            background: #020617 !important;
+        }
+
     </style>
 </head>
-<body class="flex flex-col items-center justify-center text-white relative">
-    <div class="grid-bg"></div>
+<body>
 
-    <div class="text-center mb-8 relative z-10">
-        <img src="/static/shield.png" class="logo-img" alt="CyberBuddy Logo" onerror="this.style.display='none'">
-        <h1 class="text-4xl font-bold m-0 text-white">
-            Cyber<span class="text-cyan-400">Buddy</span>
-        </h1>
-        <p class="text-slate-400 text-sm mt-2">Welcome back!</p>
-    </div>
+    <!-- Animated Background Canvas -->
+    <canvas id="cyber-canvas"></canvas>
 
-    <div class="glass-card relative z-10 w-full max-w-md p-10 rounded-3xl text-center">
-        {% if error %}
-            <p class="text-red-400 mb-4">{{ error }}</p>
-        {% endif %}
-        <form method="POST" action="/login" class="space-y-5">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <input type="text" name="username" placeholder="Username" required
-                class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
-            
-            <input type="password" name="password" placeholder="Password" required
-                class="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl outline-none text-gray-200 placeholder-gray-400 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
-            
-            <div class="text-right text-sm">
-                <a href="/forgot-password" class="text-cyan-400 hover:underline">Forgot Password?</a>
+    <!-- Ambient Glows -->
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+    <div class="ambient-glow ambient-glow-3"></div>
+
+    <!-- ================================================================
+         PAGE WRAPPER
+    ================================================================ -->
+    <div class="page-wrapper">
+
+        <!-- ── TOP BAR ── -->
+        <header class="top-bar">
+            <div class="top-bar-brand" style="display:flex; align-items:center; gap: 0.75rem;">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                  <defs>
+                    <mask id="global-cb-mask">
+                      <rect width="100" height="100" fill="white" />
+                      <rect x="0" y="48" width="100" height="4" fill="black" />
+                      <line x1="56" y1="16" x2="84" y2="44" stroke="black" stroke-width="4" stroke-linecap="round" />
+                      <line x1="56" y1="84" x2="84" y2="56" stroke="black" stroke-width="4" stroke-linecap="round" />
+                      <polygon points="50,42 58,50 50,58 42,50" fill="white" stroke="black" stroke-width="4" stroke-linejoin="round" />
+                    </mask>
+                  </defs>
+                  <g mask="url(#global-cb-mask)">
+                    <polygon points="50,10 82,42 42,42 42,58 82,58 50,90 10,50" fill="#ffffff" />
+                    <polygon points="90,50 58,18 58,82" fill="#2F7CFF" />
+                    <polygon points="50,42 58,50 50,58 42,50" fill="#3DD8FF" />
+                  </g>
+                </svg>
+                <div style="display:flex; flex-direction:column; justify-content:center;">
+                    <div class="brand-name" style="font-family:'Inter', sans-serif; font-weight:800; font-size:1.4rem; letter-spacing:-0.03em; line-height:1;">CyberBuddy</div>
+                    <div class="brand-version" style="font-family:'Inter', sans-serif; font-weight:600; font-size:0.55rem; letter-spacing:0.1em; text-transform:uppercase; color:#94a3b8; margin-top:2px;">AI Cyber Investigation Platform</div>
+                </div>
             </div>
-            
-            <button type="submit" class="w-full py-4 rounded-xl btn-gradient font-semibold text-lg">
-                Login
-            </button>
-        </form>
+            <div class="top-bar-status">
+                <div class="status-dot"></div>
+                All Systems Operational · TLS 1.3 Encrypted
+            </div>
+        </header>
 
-        <p class="mt-8 text-sm text-gray-400">
-            New user? <a href="/register" class="text-cyan-400 hover:underline">Register here</a>
-        </p>
+        <!-- ── MAIN CONTENT ── -->
+        <main class="main-grid">
 
-        <p class="mt-4">
-            <a href="/admin" class="text-cyan-400 text-sm hover:underline">Admin Login</a>
-        </p>
-    </div>
+            <!-- ══════════════════════════════════════════════
+                 LEFT COLUMN – Branding + Modules + Status
+            ══════════════════════════════════════════════ -->
+            <aside class="left-col">
+
+                <!-- Hero Block -->
+                <div class="hero-block">
+                    <div class="soc-badge">
+                        <span class="soc-badge-dot"></span>
+                        Security Operations Center
+                    </div>
+                    <h1 class="hero-title">
+                        AI-Powered <span class="gradient-text">Cyber Threat</span><br>
+                        Detection & Intelligence
+                    </h1>
+                    <p class="hero-subtitle">
+                        Every Threat. Investigated. Explained.
+                    </p>
+                </div>
+
+                <!-- Module Cards – Real CyberBuddy Capabilities -->
+                <div>
+                    <div class="status-panel-header" style="font-family:var(--font-mono);font-size:0.65rem;font-weight:600;color:var(--slate-500);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                        <i class="fa-solid fa-cubes-stacked" style="color:var(--cyan-500);font-size:0.7rem;"></i>
+                        Security Modules
+                        <span style="flex:1;height:1px;background:rgba(255,255,255,0.05);display:block;margin-left:0.5rem;"></span>
+                    </div>
+                    <div class="module-grid">
+                        <div class="module-card">
+                            <div class="module-icon cyan"><i class="fa-solid fa-link"></i></div>
+                            <div class="module-info">
+                                <div class="module-name">URL Scanner</div>
+                                <div class="module-desc">ML + threat intelligence analysis of suspicious URLs</div>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-icon blue"><i class="fa-solid fa-envelope-open-text"></i></div>
+                            <div class="module-info">
+                                <div class="module-name">Email Analysis</div>
+                                <div class="module-desc">NLP-powered phishing & social engineering detection</div>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-icon violet"><i class="fa-solid fa-camera"></i></div>
+                            <div class="module-info">
+                                <div class="module-name">Screenshot OCR</div>
+                                <div class="module-desc">Extract & analyze text from screenshots for threats</div>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-icon emerald"><i class="fa-solid fa-qrcode"></i></div>
+                            <div class="module-info">
+                                <div class="module-name">QR Code Scanner</div>
+                                <div class="module-desc">Decode & validate QR codes against threat databases</div>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-icon amber"><i class="fa-solid fa-robot"></i></div>
+                            <div class="module-info">
+                                <div class="module-name">AI Analyst</div>
+                                <div class="module-desc">GPT-assisted threat reasoning & incident explanation</div>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-icon rose"><i class="fa-solid fa-file-shield"></i></div>
+                            <div class="module-info">
+                                <div class="module-name">Report Generator</div>
+                                <div class="module-desc">Structured incident reports for analysts & teams</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status Panel -->
+                <div class="status-panel">
+                    <div class="status-panel-header">
+                        <i class="fa-solid fa-server" style="color:var(--cyan-500);font-size:0.7rem;"></i>
+                        System Status
+                    </div>
+                    <div class="status-rows">
+                        <div class="status-row">
+                            <div class="status-indicator online"></div>
+                            <span class="status-label">Detection Engine</span>
+                            <span class="status-badge ok">Ready</span>
+                        </div>
+                        <div class="status-row">
+                            <div class="status-indicator online"></div>
+                            <span class="status-label">Database Connected</span>
+                            <span class="status-badge ok">Online</span>
+                        </div>
+                        <div class="status-row">
+                            <div class="status-indicator online"></div>
+                            <span class="status-label">AI Analyst Available</span>
+                            <span class="status-badge ok">Active</span>
+                        </div>
+                        <div class="status-row">
+                            <div class="status-indicator online"></div>
+                            <span class="status-label">Security Modules Loaded</span>
+                            <span class="status-badge ok">6 / 6</span>
+                        </div>
+                        <div class="status-row">
+                            <div class="status-indicator warning"></div>
+                            <span class="status-label">Threat Intel Feed</span>
+                            <span class="status-badge standby">Demo</span>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- ══════════════════════════════════════════════
+                 CENTER COLUMN – Authentication Card
+            ══════════════════════════════════════════════ -->
+            <section class="center-col">
+
+                <!-- Brand Hero -->
+                <div class="center-brand">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="72" height="72" style="margin-bottom: 1.5rem; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));">
+                      <use href="#global-cb-mask" /> <!-- Mask defined above in top-bar -->
+                      <g mask="url(#global-cb-mask)">
+                        <polygon points="50,10 82,42 42,42 42,58 82,58 50,90 10,50" fill="#ffffff" />
+                        <polygon points="90,50 58,18 58,82" fill="#2F7CFF" />
+                        <polygon points="50,42 58,50 50,58 42,50" fill="#3DD8FF" />
+                      </g>
+                    </svg>
+                    <div class="center-brand-name" style="font-family:'Inter', sans-serif; font-weight:800; font-size:2.8rem; letter-spacing:-0.03em; color:#ffffff;">CyberBuddy</div>
+                    <div class="center-brand-tagline" style="font-family:'Inter', sans-serif; font-weight:600; font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:#94a3b8; margin-top:10px;">
+                        AI Cyber Investigation Platform
+                    </div>
+                </div>
+
+                <!-- ── AUTH CARD ── -->
+                <div class="auth-card">
+
+                    <div class="auth-card-header">
+                        <div class="auth-card-title">SOC Authentication</div>
+                        <div class="auth-card-subtitle">Authorized personnel only · Session encrypted</div>
+                    </div>
+
+                    <!-- Error Message (Flask template variable) -->
+                    {% if error %}
+                    <div class="error-alert">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <p>{{ error }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- ══ LOGIN FORM — FUNCTIONALITY 100% PRESERVED ══
+                         action="/login", method="POST"
+                         field names: username, password
+                         CSRF token preserved
+                    ════════════════════════════════════════════════ -->
+                    <form method="POST" action="/login" id="login-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <!-- Username -->
+                        <div class="form-group">
+                            <label class="form-label" for="username">Operator ID</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon-left"><i class="fa-solid fa-user-shield"></i></span>
+                                <input
+                                    type="text"
+                                    id="username"
+                                    name="username"
+                                    class="form-input"
+                                    placeholder="Enter your username"
+                                    required
+                                    autocomplete="username"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label class="form-label" for="password">Passphrase</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon-left"><i class="fa-solid fa-key"></i></span>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    class="form-input"
+                                    placeholder="Enter your passphrase"
+                                    required
+                                    autocomplete="current-password"
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Forgot Passphrase (existing route preserved) -->
+                        <div class="forgot-link">
+                            <a href="/forgot-password">Forgot Passphrase?</a>
+                        </div>
+
+                        <!-- Primary CTA: Login -->
+                        <button type="submit" id="login-btn" class="btn-login">
+                            <span class="font-extrabold text-2xl tracking-widest text-slate-100 drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">CYBERBUDDY</span>
+                            <span>Access SOC Platform</span>
+                            <i class="fa-solid fa-arrow-right" style="font-size:0.8rem;"></i>
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="card-divider">
+                        <div class="card-divider-line"></div>
+                        <span class="card-divider-text">or</span>
+                        <div class="card-divider-line"></div>
+                    </div>
+
+                    <!-- Secondary CTA: Explore Modules → opens fullscreen modal -->
+                    <button type="button" class="btn-secondary" id="explore-btn" onclick="openModulesModal()">
+                        <i class="fa-solid fa-compass"></i>
+                        <span>Explore Modules</span>
+                    </button>
+
+                    <!-- Card Footer -->
+                    <div class="card-footer">
+                        <div class="card-footer-left">
+                            No credentials?&nbsp;
+                            <a href="/register">Request Access</a>
+                        </div>
+                        <div class="card-footer-right">
+                            <a href="/admin">
+                                <i class="fa-solid fa-server"></i>
+                                Admin Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TLS/Security note under card -->
+                <div class="secure-footer-badge">
+                    <i class="fa-solid fa-lock"></i>
+                    End-to-end encrypted · TLS 1.3 · CSRF protected · Rate limited
+                </div>
+
+            </section>
+
+            <!-- ══════════════════════════════════════════════
+                 RIGHT COLUMN – Threat Intelligence Widget
+            ══════════════════════════════════════════════ -->
+            <aside class="right-col">
+
+                <!-- Threat Intelligence Widget (Demo Mode) -->
+                <div class="threat-widget">
+                    <div class="widget-header">
+                        <div class="widget-title-group">
+                            <div class="widget-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+                            <div class="widget-title">Threat Intelligence</div>
+                        </div>
+                        <div class="demo-badge">Demo Mode</div>
+                    </div>
+
+                    <!-- API Sources (future integration points) -->
+                    <div class="threat-api-sources">
+                        <span class="api-source-tag">VirusTotal</span>
+                        <span class="api-source-tag">AlienVault OTX</span>
+                        <span class="api-source-tag">AbuseIPDB</span>
+                        <span class="api-source-tag">PhishTank</span>
+                        <span class="api-source-tag">URLhaus</span>
+                        <span class="api-source-tag">CISA KEV</span>
+                    </div>
+
+                    <!-- Threat Feed (Demo Data — clearly labeled) -->
+                    <div class="threat-feed" id="threat-feed">
+                        <div class="threat-item">
+                            <div class="threat-severity critical"></div>
+                            <div class="threat-body">
+                                <div class="threat-name">update-security[.]ru/payload.exe</div>
+                                <div class="threat-meta">VirusTotal · 47/72 engines · 2m ago</div>
+                            </div>
+                            <div class="threat-tag malware">Malware</div>
+                        </div>
+                        <div class="threat-item">
+                            <div class="threat-severity high"></div>
+                            <div class="threat-body">
+                                <div class="threat-name">185.220.101[.]47</div>
+                                <div class="threat-meta">AbuseIPDB · Confidence 98% · 5m ago</div>
+                            </div>
+                            <div class="threat-tag c2">C2 Server</div>
+                        </div>
+                        <div class="threat-item">
+                            <div class="threat-severity high"></div>
+                            <div class="threat-body">
+                                <div class="threat-name">secure-login.paypaI[.]com</div>
+                                <div class="threat-meta">PhishTank · Verified · 12m ago</div>
+                            </div>
+                            <div class="threat-tag phishing">Phishing</div>
+                        </div>
+                        <div class="threat-item">
+                            <div class="threat-severity medium"></div>
+                            <div class="threat-body">
+                                <div class="threat-name">invoice_2026_q2.xlsx[.]js</div>
+                                <div class="threat-meta">URLhaus · Active · 18m ago</div>
+                            </div>
+                            <div class="threat-tag spam">Spam/Dropper</div>
+                        </div>
+                        <div class="threat-item">
+                            <div class="threat-severity low"></div>
+                            <div class="threat-body">
+                                <div class="threat-name">github.com/facebook/react</div>
+                                <div class="threat-meta">OTX · Pulse: None · Verified safe</div>
+                            </div>
+                            <div class="threat-tag safe">Clean</div>
+                        </div>
+                    </div>
+
+                    <div class="widget-footer">
+                        <div class="widget-footer-note">⚡ Ready for live API integration</div>
+                        <div class="live-indicator">
+                            <div class="live-dot"></div>
+                            Demo Feed
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats (Demo Mode) -->
+                <div>
+                    <div class="status-panel-header" style="font-family:var(--font-mono);font-size:0.65rem;font-weight:600;color:var(--slate-500);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+                        <i class="fa-solid fa-chart-simple" style="color:var(--cyan-500);font-size:0.7rem;"></i>
+                        Session Metrics
+                        <span style="flex:1;height:1px;background:rgba(255,255,255,0.05);display:block;margin-left:0.5rem;"></span>
+                        <span style="font-size:0.55rem;color:var(--amber);border:1px solid rgba(245,158,11,0.2);padding:0.15rem 0.4rem;border-radius:100px;background:rgba(245,158,11,0.08);">DEMO</span>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-scans">0</div>
+                            <div class="stat-label">Scans Today</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-threats">0</div>
+                            <div class="stat-label">Threats Found</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-uptime">99.9%</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Encryption Badge -->
+                <div class="secure-footer-badge" style="justify-content:flex-start;gap:0.75rem;">
+                    <i class="fa-solid fa-shield-check" style="color:var(--emerald);"></i>
+                    <div>
+                        <div style="color:rgba(52,211,153,0.9);font-weight:600;font-size:0.7rem;margin-bottom:0.1rem;">Secure Connection</div>
+                        <div style="font-size:0.6rem;color:var(--slate-500);">All data encrypted in transit · No telemetry</div>
+                    </div>
+                </div>
+
+            </aside>
+        </main>
+
+        <!-- ── PAGE FOOTER ── -->
+        <footer class="page-footer">
+            <div class="footer-left">
+                © 2026 CyberBuddy Threat Intelligence Platform · All rights reserved
+            </div>
+            <nav class="footer-right">
+                <a href="/about">About</a>
+                <a href="/how-to-use">How to Use</a>
+                <a href="/register">Register</a>
+                <a href="/admin">Admin</a>
+            </nav>
+        </footer>
+
+    </div><!-- /page-wrapper -->
+
+    <!-- ================================================================
+         EXPLORE MODULES MODAL
+         All 6 CyberBuddy modules presented in a fullscreen overlay.
+         Accessible: role=dialog, aria-modal, Escape key close.
+    ================================================================ -->
+    <div class="mod-overlay" id="modules-modal" role="dialog" aria-modal="true" aria-labelledby="mod-modal-title">
+        <div class="mod-panel">
+            <div class="mod-header">
+                <div class="mod-header-brand">
+                    <span class="font-extrabold text-2xl tracking-widest text-slate-100 drop-shadow-[0_0_12px_rgba(255,255,255,0.1)]">CYBERBUDDY</span>
+                    <div class="mod-header-text">
+                        <div id="mod-modal-title" class="mod-title">Security Modules</div>
+                        <div class="mod-subtitle">CyberBuddy SOC Platform &middot; All Modules</div>
+                    </div>
+                </div>
+                <button class="mod-close" id="mod-close-btn" aria-label="Close module explorer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mod-grid">
+
+                <!-- Module 1: URL Scanner -->
+                <div class="mod-card">
+                    <div class="mod-icon-row">
+                        <div class="mod-icon cyan"><i class="fa-solid fa-link"></i></div>
+                        <div>
+                            <div class="mod-name">URL Scanner</div>
+                            <span class="mod-badge">ML + OSINT</span>
+                        </div>
+                    </div>
+                    <div class="mod-purpose">Multi-layer phishing and malware URL detection</div>
+                    <div class="mod-desc">Submits any URL through a dual-engine pipeline combining a trained Random Forest classifier (20+ extracted features) with real-time OSINT lookups. Detects phishing pages, drive-by malware, domain spoofing, and credential harvesting infrastructure.</div>
+                    <div class="mod-flow">
+                        <span class="mod-flow-step">Paste URL</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Feature Extract</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">ML Score</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">OSINT Check</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Verdict</span>
+                    </div>
+                </div>
+
+                <!-- Module 2: Email Analysis -->
+                <div class="mod-card">
+                    <div class="mod-icon-row">
+                        <div class="mod-icon blue"><i class="fa-solid fa-envelope-open-text"></i></div>
+                        <div>
+                            <div class="mod-name">Email Analysis</div>
+                            <span class="mod-badge">NLP Engine</span>
+                        </div>
+                    </div>
+                    <div class="mod-purpose">NLP-driven phishing email body classification</div>
+                    <div class="mod-desc">Paste the raw body text of any suspicious email. The NLP pipeline tokenizes, vectorizes with TF-IDF, and classifies using a trained scikit-learn model. Identifies social engineering patterns, urgency manipulation, impersonation tactics, and payload delivery language.</div>
+                    <div class="mod-flow">
+                        <span class="mod-flow-step">Paste Email</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">NLP Tokenize</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">TF-IDF Score</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Classify</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Risk Rating</span>
+                    </div>
+                </div>
+
+                <!-- Module 3: Screenshot OCR -->
+                <div class="mod-card">
+                    <div class="mod-icon-row">
+                        <div class="mod-icon emerald"><i class="fa-solid fa-camera"></i></div>
+                        <div>
+                            <div class="mod-name">Screenshot OCR</div>
+                            <span class="mod-badge">Vision + OCR</span>
+                        </div>
+                    </div>
+                    <div class="mod-purpose">Extract and analyze indicators from images</div>
+                    <div class="mod-desc">Upload any screenshot — phishing pages, suspicious chat messages, fake login portals. RapidOCR extracts all embedded text, which is then routed through the NLP classifier for threat assessment. Surfaces URLs, email addresses, and social engineering content embedded in images.</div>
+                    <div class="mod-flow">
+                        <span class="mod-flow-step">Upload Image</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">OCR Extract</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Indicator Parse</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">NLP Classify</span>
+                    </div>
+                </div>
+
+                <!-- Module 4: QR Code Scanner -->
+                <div class="mod-card">
+                    <div class="mod-icon-row">
+                        <div class="mod-icon amber"><i class="fa-solid fa-qrcode"></i></div>
+                        <div>
+                            <div class="mod-name">QR Code Scanner</div>
+                            <span class="mod-badge">Decode + Verify</span>
+                        </div>
+                    </div>
+                    <div class="mod-purpose">Decode and validate QR-encoded threats</div>
+                    <div class="mod-desc">QR phishing ("quishing") is a growing attack vector that bypasses traditional email filters. Upload or capture any QR code image. OpenCV decodes the payload — typically a URL — which is immediately routed through the full URL Scanner pipeline for threat assessment.</div>
+                    <div class="mod-flow">
+                        <span class="mod-flow-step">Upload QR</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">CV Decode</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">URL Extract</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Full URL Scan</span>
+                    </div>
+                </div>
+
+                <!-- Module 5: AI Analyst -->
+                <div class="mod-card">
+                    <div class="mod-icon-row">
+                        <div class="mod-icon violet"><i class="fa-solid fa-brain"></i></div>
+                        <div>
+                            <div class="mod-name">AI Analyst</div>
+                            <span class="mod-badge">LLM Reasoning</span>
+                        </div>
+                    </div>
+                    <div class="mod-purpose">Natural-language threat explanation and MITRE mapping</div>
+                    <div class="mod-desc">The AI Analyst takes structured scan results and generates a human-readable threat narrative: attack category, attacker intent, MITRE ATT&amp;CK technique references, recommended mitigations, and an overall risk rating. Designed to bridge the gap between raw indicator data and actionable SOC intelligence.</div>
+                    <div class="mod-flow">
+                        <span class="mod-flow-step">Scan Results</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">LLM Context</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">MITRE Map</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Narrative</span>
+                    </div>
+                </div>
+
+                <!-- Module 6: Report Generator -->
+                <div class="mod-card">
+                    <div class="mod-icon-row">
+                        <div class="mod-icon rose"><i class="fa-solid fa-file-lines"></i></div>
+                        <div>
+                            <div class="mod-name">Report Generator</div>
+                            <span class="mod-badge">Incident Report</span>
+                        </div>
+                    </div>
+                    <div class="mod-purpose">Downloadable professional incident reports</div>
+                    <div class="mod-desc">Generates a structured, printable incident report from any completed analysis session. Contains the original indicator, scan timestamp, all ML and OSINT findings, the AI Analyst narrative, and a risk summary. Suitable for team sharing, client delivery, and compliance documentation.</div>
+                    <div class="mod-flow">
+                        <span class="mod-flow-step">Session Data</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Compile Findings</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Format Report</span>
+                        <span class="mod-flow-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <span class="mod-flow-step">Download</span>
+                    </div>
+                </div>
+
+            </div><!-- /mod-grid -->
+        </div><!-- /mod-panel -->
+    </div><!-- /modules-modal -->
+
+    <!-- ================================================================
+         CANVAS ENGINE — Geo Intelligence World Map
+         Powered by /static/cyber-canvas.js?v=7 (shared across all pages)
+    ================================================================ -->
+    <script src="/static/cyber-canvas.js?v=7"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        CyberBuddyMap.init('cyber-canvas', { maxArcs: 5, arcSpeed: 0.7, nodeSize: 3 });
+    });
+    </script>
+
+    <!-- ================================================================
+         MODULES MODAL CONTROLLER
+    ================================================================ -->
+    <script>
+    (function () {
+        'use strict';
+
+        function openModulesModal() {
+            var modal = document.getElementById('modules-modal');
+            if (!modal) return;
+            modal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            // Focus the close button for accessibility
+            var closeBtn = document.getElementById('mod-close-btn');
+            if (closeBtn) setTimeout(function() { closeBtn.focus(); }, 320);
+        }
+
+        function closeModulesModal() {
+            var modal = document.getElementById('modules-modal');
+            if (!modal) return;
+            modal.classList.remove('is-open');
+            document.body.style.overflow = '';
+            // Return focus to trigger button
+            var exploreBtn = document.getElementById('explore-btn');
+            if (exploreBtn) exploreBtn.focus();
+        }
+
+        // Expose openModulesModal globally for the inline onclick handler
+        window.openModulesModal = openModulesModal;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal    = document.getElementById('modules-modal');
+            var closeBtn = document.getElementById('mod-close-btn');
+
+            // Close button
+            if (closeBtn) closeBtn.addEventListener('click', closeModulesModal);
+
+            // Click-outside-to-close
+            if (modal) {
+                modal.addEventListener('click', function (e) {
+                    if (e.target === modal) closeModulesModal();
+                });
+            }
+
+            // Escape key close
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    var m = document.getElementById('modules-modal');
+                    if (m && m.classList.contains('is-open')) closeModulesModal();
+                }
+            });
+        });
+    }());
+    </script>
+
+    <!-- Truncated original canvas IIFE was removed; now using CyberBuddyMap engine -->
+
+    <!-- ================================================================
+         STATS COUNTER ANIMATION
+    ================================================================ -->
+    <script>
+    (function () {
+        // Demo counters – animate up on load for visual polish
+        function animCount(el, target, duration) {
+            let start = null;
+            const step = ts => {
+                if (!start) start = ts;
+                const progress = Math.min((ts - start) / duration, 1);
+                el.textContent = Math.floor(progress * target);
+                if (progress < 1) requestAnimationFrame(step);
+                else el.textContent = target;
+            };
+            requestAnimationFrame(step);
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                animCount(document.getElementById('stat-scans'),   247, 1800);
+                animCount(document.getElementById('stat-threats'),  18, 1800);
+            }, 600);
+        });
+    }());
+    </script>
+
+    <!-- ================================================================
+         LOGIN BUTTON LOADING STATE
+    ================================================================ -->
+    <script>
+    (function () {
+        const form = document.getElementById('login-form');
+        const btn  = document.getElementById('login-btn');
+        if (form && btn) {
+            form.addEventListener('submit', function () {
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>Authenticating…</span>';
+                btn.disabled  = true;
+                btn.style.opacity = '0.8';
+            });
+        }
+    }());
+    </script>
+
 </body>
 </html>

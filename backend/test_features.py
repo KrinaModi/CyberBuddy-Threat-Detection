@@ -1,4 +1,7 @@
 import pytest
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.features import extract_features
 from utils.preprocessing import clean_text
 

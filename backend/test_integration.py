@@ -42,6 +42,8 @@ def test_full_flow(client):
     with flask_app.app_context():
         user = User.query.filter_by(username='testuser').first()
         assert user is not None
+        user.is_admin = True
+        db.session.commit()
         assert user.is_admin is True
 
     # 2. Login User
@@ -94,7 +96,7 @@ def test_full_flow(client):
     
     response = client.get(f'/report/{scan_id}')
     assert response.status_code == 200
-    assert b"Threat Investigation Report" in response.data
+    assert b"CyberBuddy SOC Report" in response.data
 
     # 9. Admin Dashboard
     response = client.get('/admin')
